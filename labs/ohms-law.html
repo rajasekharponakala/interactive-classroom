@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ohm's Law Lab – Interactive Classroom</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/base.css">
+<link rel="stylesheet" href="../css/lab.css">
+<style>:root { --accent: var(--sky); --accent-soft: var(--sky-soft); }
+.stage > svg text { font-family: var(--body); font-weight: 800; fill: var(--ink); }
+#graph { width: 100%; height: auto; display: block; } #graph text { font: 800 11px var(--body); fill: var(--ink-2); }</style>
+</head>
+<body>
+<header class="lab-head"><h1>Ohm's Law Lab</h1><span class="tag">Electric current</span></header>
+<main class="lab">
+  <div class="stage">
+    <svg id="circuit" viewBox="0 0 600 360" preserveAspectRatio="xMidYMid meet" role="img" aria-label="A circuit with a battery, a resistor, a bulb and an ammeter in one loop.">
+      <rect x="80" y="70" width="440" height="220" rx="26" fill="none" stroke="var(--ink)" stroke-width="6"/>
+      <g id="dots"></g>
+      <!-- resistor -->
+      <rect x="230" y="48" width="140" height="44" rx="12" fill="var(--sun)" stroke="var(--ink)" stroke-width="4"/>
+      <path d="M244 70l10-12 14 24 14-24 14 24 14-24 14 24 14-24 10 12" fill="none" stroke="var(--ink)" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+      <text id="rLab" x="300" y="34" text-anchor="middle" font-size="18"></text>
+      <!-- battery -->
+      <rect x="48" y="130" width="64" height="100" rx="14" fill="var(--teal)" stroke="var(--ink)" stroke-width="4"/>
+      <rect x="66" y="118" width="28" height="14" rx="5" fill="var(--ink)"/>
+      <text x="80" y="160" text-anchor="middle" font-size="22" fill="#fff" style="fill:#fff">+</text>
+      <text x="80" y="218" text-anchor="middle" font-size="22" style="fill:#fff">–</text>
+      <text id="vLab" x="80" y="258" text-anchor="middle" font-size="18" paint-order="stroke" stroke="var(--card)" stroke-width="6"></text>
+      <!-- bulb -->
+      <circle id="glow" cx="520" cy="180" r="62" fill="var(--sun)" opacity="0"/>
+      <circle cx="520" cy="180" r="30" fill="var(--card)" stroke="var(--ink)" stroke-width="4"/>
+      <path d="M506 190q14-34 28 0" fill="none" stroke="var(--ink)" stroke-width="3.5" stroke-linecap="round"/>
+      <!-- ammeter -->
+      <circle cx="300" cy="290" r="46" fill="var(--card)" stroke="var(--ink)" stroke-width="4"/>
+      <text x="300" y="282" text-anchor="middle" font-size="11" style="fill:var(--ink-2)">AMMETER</text>
+      <text id="aLab" x="300" y="304" text-anchor="middle" font-size="17"></text>
+      <path id="arrow" d="M420 44h44m-12-9 12 9-12 9" fill="none" stroke="var(--coral)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="442" y="30" text-anchor="middle" font-size="13" style="fill:var(--coral)">current</text>
+    </svg>
+  </div>
+  <div class="panel">
+    <div class="box">
+      <h2>Change</h2>
+      <div class="ctl"><label for="v">Voltage</label><output id="vOut"></output><input id="v" type="range" min="0" max="12" step="0.5" value="6"></div>
+      <div class="ctl"><label for="r">Resistance</label><output id="rOut"></output><input id="r" type="range" min="1" max="50" step="1" value="10"></div>
+    </div>
+    <div class="box">
+      <h2>Measure</h2>
+      <div class="reads">
+        <div class="read"><span>Current I = V ÷ R</span><b id="iRead"></b></div>
+        <div class="read"><span>Power P = V × I</span><b id="pRead"></b></div>
+      </div>
+    </div>
+    <div class="box">
+      <h2>Graph of I against V</h2>
+      <svg id="graph" viewBox="0 0 280 170" role="img" aria-label="Graph of current against voltage for the chosen resistance"></svg>
+      <div class="row" style="margin-top:8px"><button class="btn primary" id="rec" type="button">Record reading</button><button class="btn" id="clr" type="button">Clear</button></div>
+      <table class="log" id="log" style="margin-top:8px"><thead><tr><th>V (V)</th><th>I (A)</th><th>V ÷ I (Ω)</th></tr></thead><tbody></tbody></table>
+      <p class="note" style="margin-top:6px">Record a few readings at one resistance. What do you notice about V ÷ I?</p>
+    </div>
+  </div>
+</main>
+<script src="lab.js"></script>
+<script>
+(function () {
+  const $ = (i) => document.getElementById(i), NS = "http://www.w3.org/2000/svg";
+  let V = 6, R = 10, recs = [];
+  // electrons travel round the loop against the conventional current arrow
+  const PERIM = 1320, N = 30, dots = [];
+  for (let i = 0; i < N; i++) { const c = document.createElementNS(NS, "circle"); c.setAttribute("r", 5); c.setAttribute("fill", "var(--sky)"); $("dots").appendChild(c); dots.push(c); }
+  function at(s) { // point on the rectangle, clockwise from top-left
+    s = ((s % PERIM) + PERIM) % PERIM;
+    if (s < 440) return [80 + s, 70];
+    if (s < 660) return [520, 70 + (s - 440)];
+    if (s < 1100) return [520 - (s - 660), 290];
+    return [80, 290 - (s - 1100)];
+  }
+  const fmtI = (i) => (i < 1 ? (i * 1000).toFixed(0) + " mA" : i.toFixed(2) + " A");
+  function draw() {
+    const I = V / R;
+    $("vLab").textContent = V.toFixed(1) + " V"; $("rLab").textContent = R + " Ω"; $("aLab").textContent = fmtI(I);
+    $("iRead").textContent = fmtI(I); $("pRead").textContent = (V * I).toFixed(2) + " W";
+    $("glow").setAttribute("opacity", Math.min(0.85, I / 1.5));
+    $("arrow").style.opacity = I > 0 ? 1 : 0.25;
+    graph();
+  }
+  function graph() {
+    const x0 = 34, y0 = 142, w = 232, h = 124, I = V / R;
+    const iMax = Math.max(0.3, ...recs.map((r) => r.I), 12 / R) * 1.1;
+    const X = (v) => x0 + (v / 12) * w, Y = (i) => y0 - (i / iMax) * h;
+    let s = '<path d="M' + x0 + " " + (y0 - h - 6) + "V" + y0 + "H" + (x0 + w + 6) + '" fill="none" stroke="var(--ink-3)" stroke-width="1.5"/>';
+    [0, 4, 8, 12].forEach((v) => (s += '<text x="' + X(v) + '" y="' + (y0 + 14) + '" text-anchor="middle">' + v + "</text>"));
+    s += '<text x="' + (x0 + w) + '" y="' + (y0 + 26) + '" text-anchor="end">V (volts)</text><text x="' + (x0 - 4) + '" y="' + (Y(iMax) + 10) + '" text-anchor="end">' + iMax.toFixed(1) + '</text><text x="6" y="12">I (amps)</text>';
+    s += '<line x1="' + X(0) + '" y1="' + Y(0) + '" x2="' + X(12) + '" y2="' + Y(12 / R) + '" stroke="var(--sky)" stroke-width="3" stroke-linecap="round"/>';
+    recs.forEach((r) => (s += '<circle cx="' + X(r.V) + '" cy="' + Y(r.I) + '" r="5" fill="var(--card)" stroke="var(--ink)" stroke-width="2"/>'));
+    s += '<circle cx="' + X(V) + '" cy="' + Y(I) + '" r="7" fill="var(--coral)" stroke="var(--card)" stroke-width="2"/>';
+    $("graph").innerHTML = s;
+  }
+  function log() {
+    $("log").tBodies[0].innerHTML = recs.map((r) => "<tr><td>" + r.V.toFixed(1) + "</td><td>" + r.I.toFixed(2) + "</td><td>" + (r.I ? (r.V / r.I).toFixed(1) : "–") + "</td></tr>").join("");
+  }
+  Lab.bind("v", (v) => v.toFixed(1) + " V", (v) => { V = v; draw(); });
+  Lab.bind("r", (v) => v + " Ω", (v) => { R = v; draw(); });
+  $("rec").onclick = () => { recs.push({ V, I: V / R }); if (recs.length > 6) recs.shift(); log(); graph(); };
+  $("clr").onclick = () => { recs = []; log(); graph(); };
+  let off = 0, last = performance.now();
+  (function tick(now) {
+    off -= (V / R) * 90 * Math.min(0.05, (now - last) / 1000); last = now;
+    dots.forEach((c, i) => { const p = at(off + (i * PERIM) / N); c.setAttribute("cx", p[0]); c.setAttribute("cy", p[1]); });
+    requestAnimationFrame(tick);
+  })(last);
+})();
+</script>
+</body>
+</html>

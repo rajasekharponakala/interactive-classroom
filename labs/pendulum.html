@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pendulum Lab – Interactive Classroom</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/base.css">
+<link rel="stylesheet" href="../css/lab.css">
+<style>:root { --accent: var(--coral); --accent-soft: var(--coral-soft); }
+.bars { display: grid; gap: 6px; } .bar { display: grid; grid-template-columns: 74px 1fr; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; }
+.bar i { display: block; height: 14px; border-radius: 7px; background: var(--line); overflow: hidden; } .bar i b { display: block; height: 100%; border-radius: 7px; }</style>
+</head>
+<body>
+<header class="lab-head"><h1>Pendulum Lab</h1><span class="tag">Motion and time</span></header>
+<main class="lab">
+  <div class="stage"><canvas id="cv" aria-label="A pendulum. Drag the bob sideways and let go to start it swinging."></canvas><span class="hint" id="hint">Drag the bob and let go</span></div>
+  <div class="panel">
+    <div class="box">
+      <h2>Change</h2>
+      <div class="ctl"><label for="len">Length</label><output id="lenOut"></output><input id="len" type="range" min="0.2" max="2" step="0.05" value="1"></div>
+      <div class="ctl"><label for="mass">Mass of bob</label><output id="massOut"></output><input id="mass" type="range" min="0.1" max="2" step="0.1" value="0.5"></div>
+      <div class="ctl"><label for="grav">Where are you?</label><span></span>
+        <select id="grav"><option value="9.8">Earth (g = 9.8 m/s²)</option><option value="1.62">Moon (g = 1.62 m/s²)</option><option value="3.71">Mars (g = 3.71 m/s²)</option><option value="24.8">Jupiter (g = 24.8 m/s²)</option></select></div>
+      <div class="row" style="margin-top:12px"><label class="check"><input id="air" type="checkbox"> Air resistance</label></div>
+    </div>
+    <div class="box">
+      <h2>Measure</h2>
+      <div class="reads">
+        <div class="read"><span>Time for one swing</span><b id="tMeas">–</b></div>
+        <div class="read"><span>Swings counted</span><b id="nSw">0</b></div>
+        <div class="read wide"><span>Formula for small swings: T = 2π√(L/g)</span><b id="tForm"></b></div>
+      </div>
+    </div>
+    <div class="box">
+      <h2>Energy</h2>
+      <div class="bars">
+        <div class="bar">Height<i><b id="pe" style="background:var(--sky)"></b></i></div>
+        <div class="bar">Movement<i><b id="ke" style="background:var(--coral)"></b></i></div>
+      </div>
+      <p class="note" style="margin-top:8px">Energy swaps between height (potential) and movement (kinetic) on every swing.</p>
+    </div>
+    <div class="row"><button class="btn" id="reset" type="button">Reset</button></div>
+  </div>
+</main>
+<script src="lab.js"></script>
+<script>
+(function () {
+  const cv = document.getElementById("cv"), $ = (i) => document.getElementById(i);
+  let L = 1, m = 0.5, g = 9.8, th = 0.35, om = 0, drag = false, t = 0, lastCross = null, periods = [], swings = 0, E0 = 0;
+  const energy = () => ({ pe: m * g * L * (1 - Math.cos(th)), ke: 0.5 * m * L * L * om * om });
+  function restart() { t = 0; lastCross = null; periods = []; swings = 0; const e = energy(); E0 = e.pe + e.ke; readouts(); }
+  function readouts() {
+    $("tForm").textContent = (2 * Math.PI * Math.sqrt(L / g)).toFixed(2) + " s";
+    $("tMeas").textContent = periods.length ? (periods.reduce((a, b) => a + b) / periods.length).toFixed(2) + " s" : "–";
+    $("nSw").textContent = swings;
+  }
+  Lab.bind("len", (v) => v.toFixed(2) + " m", (v) => { L = v; th = 0.35; om = 0; restart(); });
+  Lab.bind("mass", (v) => v.toFixed(1) + " kg", (v) => { m = v; th = 0.35; om = 0; restart(); });
+  $("grav").onchange = (e) => { g = +e.target.value; th = 0.35; om = 0; restart(); };
+  $("reset").onclick = () => { th = 0.35; om = 0; restart(); };
+
+  function geom() {
+    const r = cv.getBoundingClientRect(), top = Lab.mini ? 18 : 44;
+    const scale = (r.height - top - 46) / 2.05;
+    return { px: r.width / 2, py: top, scale, r };
+  }
+  function bobPos() { const G = geom(); return { x: G.px + Math.sin(th) * L * G.scale, y: G.py + Math.cos(th) * L * G.scale, G }; }
+  cv.addEventListener("pointerdown", (e) => {
+    const b = bobPos(), x = e.clientX - b.G.r.left, y = e.clientY - b.G.r.top;
+    if (Math.hypot(x - b.x, y - b.y) < 60) { drag = true; cv.setPointerCapture(e.pointerId); $("hint").style.opacity = 0; move(e); }
+  });
+  function move(e) {
+    if (!drag) return;
+    const G = geom(), x = e.clientX - G.r.left - G.px, y = Math.max(10, e.clientY - G.r.top - G.py);
+    th = Math.max(-1.4, Math.min(1.4, Math.atan2(x, y))); om = 0;
+  }
+  cv.addEventListener("pointermove", move);
+  const up = () => { if (drag) { drag = false; restart(); } };
+  cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
+  cv.tabIndex = 0;
+  cv.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowLeft" || e.key === "ArrowRight") { th = Math.max(-1.4, Math.min(1.4, th + (e.key === "ArrowLeft" ? -0.1 : 0.1))); om = 0; restart(); e.preventDefault(); }
+  });
+
+  function step(dt) {
+    const b = $("air").checked ? 0.25 : 0, n = 8, h = dt / n;
+    for (let i = 0; i < n; i++) {
+      const prev = th;
+      om += (-(g / L) * Math.sin(th) - b * om) * h; th += om * h; t += h;
+      if (prev < 0 && th >= 0) {
+        if (lastCross !== null) { periods.push(t - lastCross); if (periods.length > 5) periods.shift(); swings++; }
+        lastCross = t;
+      }
+    }
+  }
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.04, (now - last) / 1000); last = now;
+    if (!drag) step(dt);
+    const { ctx, w, h } = Lab.fit(cv), b = bobPos(), G = b.G;
+    ctx.clearRect(0, 0, w, h);
+    const ink = Lab.css("--ink"), line = Lab.css("--line");
+    // swing arc guide
+    ctx.strokeStyle = line; ctx.lineWidth = 2; ctx.setLineDash([6, 8]);
+    ctx.beginPath(); ctx.arc(G.px, G.py, L * G.scale, Math.PI / 2 - 1.2, Math.PI / 2 + 1.2); ctx.stroke(); ctx.setLineDash([]);
+    // support
+    ctx.fillStyle = ink; ctx.beginPath(); ctx.roundRect(G.px - 70, G.py - 12, 140, 12, 6); ctx.fill();
+    // string and bob
+    ctx.strokeStyle = ink; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(G.px, G.py); ctx.lineTo(b.x, b.y); ctx.stroke();
+    const rad = 16 + Math.cbrt(m) * 14;
+    ctx.fillStyle = Lab.css("--coral"); ctx.beginPath(); ctx.arc(b.x, b.y, rad, 0, 7); ctx.fill();
+    ctx.lineWidth = 3; ctx.strokeStyle = ink; ctx.stroke();
+    ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.beginPath(); ctx.arc(b.x - rad * .35, b.y - rad * .35, rad * .22, 0, 7); ctx.fill();
+    if (!Lab.mini) {
+      ctx.fillStyle = Lab.css("--ink-2"); ctx.font = "800 14px " + Lab.css("--body"); ctx.textAlign = "center";
+      ctx.fillText(Math.abs(th * 180 / Math.PI).toFixed(0) + "°", G.px + (th >= 0 ? -34 : 34), G.py + 34);
+      const e = energy(), tot = Math.max(E0, e.pe + e.ke, 1e-6);
+      $("pe").style.width = (100 * e.pe / tot) + "%"; $("ke").style.width = (100 * e.ke / tot) + "%";
+      readouts();
+    }
+    requestAnimationFrame(frame);
+  }
+  restart(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Triangle Angles Lab – Interactive Classroom</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/base.css">
+<link rel="stylesheet" href="../css/lab.css">
+<style>:root { --accent: var(--violet); --accent-soft: var(--violet-soft); }
+svg text { font-family: var(--body); font-weight: 900; fill: var(--ink); }
+.vx { cursor: grab; } .vx:active { cursor: grabbing; }
+#strip { width: 100%; height: auto; display: block; }</style>
+</head>
+<body>
+<header class="lab-head"><h1>Triangle Angles Lab</h1><span class="tag">Triangles</span></header>
+<main class="lab">
+  <div class="stage">
+    <svg id="sv" viewBox="0 0 600 420" preserveAspectRatio="xMidYMid meet" aria-label="A triangle with three draggable corners.">
+      <g id="art"></g>
+      <g id="handles"></g>
+    </svg>
+    <span class="hint" id="hint">Drag any corner</span>
+  </div>
+  <div class="panel">
+    <div class="box">
+      <h2>Angles</h2>
+      <div class="reads">
+        <div class="read" style="background:var(--coral-soft)"><span>Angle A</span><b id="aA"></b></div>
+        <div class="read" style="background:var(--sky-soft)"><span>Angle B</span><b id="aB"></b></div>
+        <div class="read" style="background:var(--leaf-soft)"><span>Angle C</span><b id="aC"></b></div>
+        <div class="read" style="background:var(--sun-soft)"><span>A + B + C</span><b>180°</b></div>
+      </div>
+    </div>
+    <div class="box">
+      <h2>Put the three corners together</h2>
+      <svg id="strip" viewBox="0 0 280 120" role="img" aria-label="The three angles placed side by side make a straight line"></svg>
+      <p class="note">However you pull the triangle, the three angles always fit along a straight line.</p>
+    </div>
+    <div class="box">
+      <h2>This triangle is</h2>
+      <p style="font-family:var(--display);font-size:22px;font-weight:700;line-height:1.2" id="kind"></p>
+      <p class="note" id="sides" style="margin-top:6px"></p>
+      <div class="row" style="margin-top:12px"><label class="check"><input id="ext" type="checkbox"> Show exterior angle at C</label></div>
+      <p class="note" id="extNote" style="margin-top:6px" hidden></p>
+    </div>
+    <div class="row"><button class="btn" id="reset" type="button">Reset</button></div>
+  </div>
+</main>
+<script src="lab.js"></script>
+<script>
+(function () {
+  const $ = (i) => document.getElementById(i), sv = $("sv"), NS = "http://www.w3.org/2000/svg";
+  const COL = ["var(--coral)", "var(--sky)", "var(--leaf)"], NAME = ["A", "B", "C"];
+  const START = [[300, 70], [110, 340], [490, 340]];
+  let P = START.map((p) => p.slice());
+  const handles = P.map((_, i) => {
+    const c = document.createElementNS(NS, "circle");
+    c.setAttribute("r", 16); c.setAttribute("class", "vx"); c.setAttribute("fill", COL[i]); c.setAttribute("stroke", "var(--ink)"); c.setAttribute("stroke-width", 4);
+    c.setAttribute("tabindex", 0); c.setAttribute("role", "slider"); c.setAttribute("aria-label", "Corner " + NAME[i] + ". Use arrow keys to move.");
+    $("handles").appendChild(c);
+    c.addEventListener("pointerdown", (e) => { c.setPointerCapture(e.pointerId); c._d = true; $("hint").style.opacity = 0; });
+    c.addEventListener("pointermove", (e) => {
+      if (!c._d) return;
+      const m = sv.getScreenCTM().inverse(), q = new DOMPoint(e.clientX, e.clientY).matrixTransform(m);
+      tryMove(i, q.x, q.y);
+    });
+    const up = () => (c._d = false);
+    c.addEventListener("pointerup", up); c.addEventListener("pointercancel", up);
+    c.addEventListener("keydown", (e) => {
+      const d = { ArrowLeft: [-8, 0], ArrowRight: [8, 0], ArrowUp: [0, -8], ArrowDown: [0, 8] }[e.key];
+      if (d) { tryMove(i, P[i][0] + d[0], P[i][1] + d[1]); e.preventDefault(); }
+    });
+    return c;
+  });
+  const area = (p) => Math.abs((p[1][0] - p[0][0]) * (p[2][1] - p[0][1]) - (p[2][0] - p[0][0]) * (p[1][1] - p[0][1])) / 2;
+  function tryMove(i, x, y) {
+    const q = P.map((p) => p.slice());
+    q[i] = [Math.max(30, Math.min(570, x)), Math.max(30, Math.min(390, y))];
+    if (area(q) > 2500) { P = q; draw(); } // keep it a real triangle
+  }
+  const ang = (i) => {
+    const a = P[i], b = P[(i + 1) % 3], c = P[(i + 2) % 3];
+    const u = [b[0] - a[0], b[1] - a[1]], v = [c[0] - a[0], c[1] - a[1]];
+    return Math.acos((u[0] * v[0] + u[1] * v[1]) / (Math.hypot(...u) * Math.hypot(...v)));
+  };
+  function wedge(cx, cy, r, a0, a1, fill) { // sector from angle a0 to a1 (radians, screen coordinates)
+    const x0 = cx + r * Math.cos(a0), y0 = cy + r * Math.sin(a0), x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
+    let d = a1 - a0; while (d < 0) d += 2 * Math.PI;
+    return '<path d="M' + cx + " " + cy + "L" + x0 + " " + y0 + "A" + r + " " + r + " 0 " + (d > Math.PI ? 1 : 0) + " 1 " + x1 + " " + y1 + 'Z" fill="' + fill + '" stroke="var(--ink)" stroke-width="2.5" stroke-linejoin="round"/>';
+  }
+  function cornerWedge(i, r) { // interior wedge at vertex i, drawn through the smaller arc
+    const a = P[i], b = P[(i + 1) % 3], c = P[(i + 2) % 3];
+    let t1 = Math.atan2(b[1] - a[1], b[0] - a[0]), t2 = Math.atan2(c[1] - a[1], c[0] - a[0]);
+    let d = t2 - t1; while (d < 0) d += 2 * Math.PI;
+    if (d > Math.PI) { const t = t1; t1 = t2; t2 = t; }
+    return { t1, t2, svg: wedge(a[0], a[1], r, t1, t2, COL[i]) };
+  }
+  function draw() {
+    const deg = [0, 1, 2].map((i) => ang(i) * 180 / Math.PI);
+    const rA = Math.round(deg[0]), rB = Math.round(deg[1]), rC = 180 - rA - rB;
+    const R = [rA, rB, rC];
+    let s = "";
+    const showExt = $("ext").checked;
+    if (showExt) { // extend side BC beyond C
+      const b = P[1], c = P[2], L = Math.hypot(c[0] - b[0], c[1] - b[1]), ux = (c[0] - b[0]) / L, uy = (c[1] - b[1]) / L;
+      const ex = c[0] + ux * 110, ey = c[1] + uy * 110;
+      const tE = Math.atan2(uy, ux), tA = Math.atan2(P[0][1] - c[1], P[0][0] - c[0]);
+      let d = tA - tE; while (d < 0) d += 2 * Math.PI;
+      s += d > Math.PI ? wedge(c[0], c[1], 56, tA, tE, "var(--sun)") : wedge(c[0], c[1], 56, tE, tA, "var(--sun)");
+      s += '<line x1="' + c[0] + '" y1="' + c[1] + '" x2="' + ex + '" y2="' + ey + '" stroke="var(--ink)" stroke-width="4" stroke-dasharray="8 8" stroke-linecap="round"/>';
+      const mid = d > Math.PI ? tA + (2 * Math.PI - d) / 2 : tE + d / 2;
+      s += '<text x="' + (c[0] + 82 * Math.cos(mid)) + '" y="' + (c[1] + 82 * Math.sin(mid) + 6) + '" text-anchor="middle" font-size="17">' + (rA + rB) + "°</text>";
+    }
+    [0, 1, 2].forEach((i) => (s += cornerWedge(i, 44).svg));
+    s += '<polygon points="' + P.map((p) => p.join(",")).join(" ") + '" fill="var(--violet-soft)" fill-opacity=".45" stroke="var(--ink)" stroke-width="5" stroke-linejoin="round"/>';
+    const cx = (P[0][0] + P[1][0] + P[2][0]) / 3, cy = (P[0][1] + P[1][1] + P[2][1]) / 3;
+    [0, 1, 2].forEach((i) => {
+      const dx = P[i][0] - cx, dy = P[i][1] - cy, l = Math.hypot(dx, dy);
+      s += '<text x="' + (P[i][0] - (dx / l) * 66) + '" y="' + (P[i][1] - (dy / l) * 66 + 6) + '" text-anchor="middle" font-size="18">' + R[i] + "°</text>";
+      s += '<text x="' + (P[i][0] + (dx / l) * 34) + '" y="' + (P[i][1] + (dy / l) * 34 + 7) + '" text-anchor="middle" font-size="22">' + NAME[i] + "</text>";
+    });
+    $("art").innerHTML = s;
+    handles.forEach((h, i) => { h.setAttribute("cx", P[i][0]); h.setAttribute("cy", P[i][1]); });
+    $("aA").textContent = rA + "°"; $("aB").textContent = rB + "°"; $("aC").textContent = rC + "°";
+    // the three angles side by side on a straight line
+    let st = '<line x1="14" y1="104" x2="266" y2="104" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/>', a0 = Math.PI;
+    [0, 1, 2].forEach((i) => { const a1 = a0 + deg[i] * Math.PI / 180; st += wedge(140, 104, 84, a0, a1, COL[i]);
+      const mm = (a0 + a1) / 2; st += '<text x="' + (140 + 54 * Math.cos(mm)) + '" y="' + (104 + 54 * Math.sin(mm) + 6) + '" text-anchor="middle" font-size="15">' + NAME[i] + "</text>"; a0 = a1; });
+    $("strip").innerHTML = st;
+    const side = (i, j) => Math.hypot(P[i][0] - P[j][0], P[i][1] - P[j][1]) / 40;
+    const S = [side(1, 2), side(0, 2), side(0, 1)], eq = (x, y) => Math.abs(x - y) < 0.12;
+    const byAngle = R.some((x) => x === 90) ? "Right-angled" : R.some((x) => x > 90) ? "Obtuse-angled" : "Acute-angled";
+    const bySide = eq(S[0], S[1]) && eq(S[1], S[2]) ? "equilateral" : eq(S[0], S[1]) || eq(S[1], S[2]) || eq(S[0], S[2]) ? "isosceles" : "scalene";
+    $("kind").textContent = byAngle + ", " + bySide;
+    $("sides").textContent = "Sides: BC = " + S[0].toFixed(1) + ", CA = " + S[1].toFixed(1) + ", AB = " + S[2].toFixed(1) + " units";
+    $("extNote").hidden = !showExt;
+    $("extNote").innerHTML = "Exterior angle at C = <b>" + (rA + rB) + "°</b> = A + B (" + rA + "° + " + rB + "°)";
+  }
+  $("ext").onchange = draw;
+  $("reset").onclick = () => { P = START.map((p) => p.slice()); draw(); };
+  draw();
+})();
+</script>
+</body>
+</html>

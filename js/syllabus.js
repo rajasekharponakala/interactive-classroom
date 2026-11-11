@@ -1,5 +1,5 @@
 // Syllabus → PhET simulation map for Telangana (SCERT TS) and Andhra Pradesh (SCERT AP) classes 6–10.
-// Each chapter is [title, "space separated PhET sim slugs"]. An empty string means no suitable sim exists (a gap).
+// Each chapter is [title, "space separated sims"]: a plain slug is a PhET sim, "@id" is one of our own labs in /labs. An empty string means no suitable sim exists (a gap).
 // Chapter lists follow the SCERT Telangana textbooks and, for AP, the SCERT AP books (classes 6–7) and the
 // NCERT books AP adopted (classes 8–10). Check against the current-year textbook before lesson planning.
 
@@ -57,7 +57,7 @@ window.BOARDS = {
           ["Food Components", ""],
           ["Acids and Bases", "ph-scale-basics ph-scale"],
           ["Animal Fibre", ""],
-          ["Motion and Time", "pendulum-lab forces-and-motion-basics"],
+          ["Motion and Time", "@pendulum pendulum-lab forces-and-motion-basics"],
           ["Temperature and Its Measurement", "energy-forms-and-changes states-of-matter-basics"],
           ["Weather and Climate", ""],
           ["Electricity – Current and Its Effects", "circuit-construction-kit-dc magnets-and-electromagnets"],
@@ -77,7 +77,7 @@ window.BOARDS = {
           ["Fractions, Decimals and Rational Numbers", "fractions-intro build-a-fraction fractions-mixed-numbers area-model-decimals"],
           ["Simple Equations", "equality-explorer-basics equality-explorer"],
           ["Lines and Angles", ""],
-          ["Triangle and Its Properties", ""],
+          ["Triangle and Its Properties", "@triangle"],
           ["Ratio – Applications", "ratio-and-proportion unit-rates proportion-playground"],
           ["Data Handling", "mean-share-and-balance center-and-variability"],
           ["Congruency of Triangles", ""],
@@ -168,7 +168,7 @@ window.BOARDS = {
           ["Real Numbers", ""],
           ["Polynomials and Factorisation", "area-model-algebra expression-exchange"],
           ["The Elements of Geometry", ""],
-          ["Lines and Angles", ""],
+          ["Lines and Angles", "@triangle"],
           ["Coordinate Geometry", "graphing-lines number-line-distance"],
           ["Linear Equations in Two Variables", "graphing-slope-intercept graphing-lines equality-explorer-two-variables"],
           ["Triangles", ""],
@@ -184,15 +184,15 @@ window.BOARDS = {
       },
       10: {
         phy: [
-          ["Reflection of Light at Curved Surfaces", "geometric-optics"],
+          ["Reflection of Light at Curved Surfaces", "@lens-mirror geometric-optics"],
           ["Chemical Equations", "balancing-chemical-equations reactants-products-and-leftovers"],
           ["Acids, Bases and Salts", "ph-scale ph-scale-basics acid-base-solutions"],
-          ["Refraction of Light at Curved Surfaces", "geometric-optics bending-light"],
+          ["Refraction of Light at Curved Surfaces", "@lens-mirror geometric-optics bending-light"],
           ["Human Eye and Colourful World", "color-vision bending-light geometric-optics-basics"],
           ["Structure of Atom", "models-of-the-hydrogen-atom build-an-atom rutherford-scattering"],
           ["Classification of Elements – The Periodic Table", "build-an-atom isotopes-and-atomic-mass"],
           ["Chemical Bonding", "molecule-shapes molecule-polarity atomic-interactions build-a-molecule"],
-          ["Electric Current", "circuit-construction-kit-dc ohms-law resistance-in-a-wire circuit-construction-kit-dc-virtual-lab"],
+          ["Electric Current", "@ohms-law circuit-construction-kit-dc ohms-law resistance-in-a-wire circuit-construction-kit-dc-virtual-lab"],
           ["Electromagnetism", "faradays-electromagnetic-lab magnets-and-electromagnets faradays-law generator magnet-and-compass"],
           ["Principles of Metallurgy", ""],
           ["Carbon and Its Compounds", "build-a-molecule molecule-shapes"],
@@ -270,7 +270,7 @@ window.BOARDS = {
           ["Nature of Substances", "ph-scale-basics ph-scale"],
           ["Nutrition in Organisms", ""],
           ["Respiration and Circulation", ""],
-          ["Motion and Time", "pendulum-lab forces-and-motion-basics"],
+          ["Motion and Time", "@pendulum pendulum-lab forces-and-motion-basics"],
           ["Electricity", "circuit-construction-kit-dc magnets-and-electromagnets"],
           ["Reproduction in Plants", ""],
           ["Wonders of Light", "geometric-optics-basics bending-light color-vision"],
@@ -284,7 +284,7 @@ window.BOARDS = {
           ["Fractions and Decimals", "fractions-intro build-a-fraction fractions-mixed-numbers area-model-decimals"],
           ["Simple Equations", "equality-explorer-basics equality-explorer"],
           ["Lines and Angles", ""],
-          ["Triangles", ""],
+          ["Triangles", "@triangle"],
           ["Data Handling", "mean-share-and-balance center-and-variability"],
           ["Ratio and Proportion", "ratio-and-proportion unit-rates proportion-playground"],
           ["Exponents and Powers", ""],
@@ -351,7 +351,7 @@ window.BOARDS = {
           ["Coordinate Geometry", "graphing-lines number-line-distance"],
           ["Linear Equations in Two Variables", "graphing-slope-intercept graphing-lines equality-explorer-two-variables"],
           ["Introduction to Euclid's Geometry", ""],
-          ["Lines and Angles", ""],
+          ["Lines and Angles", "@triangle"],
           ["Triangles", ""],
           ["Quadrilaterals", "quadrilateral"],
           ["Circles", ""],
@@ -366,9 +366,9 @@ window.BOARDS = {
           ["Acids, Bases and Salts", "ph-scale ph-scale-basics acid-base-solutions"],
           ["Metals and Non-metals", ""],
           ["Carbon and Its Compounds", "build-a-molecule molecule-shapes"],
-          ["Light – Reflection and Refraction", "geometric-optics geometric-optics-basics bending-light"],
+          ["Light – Reflection and Refraction", "@lens-mirror geometric-optics geometric-optics-basics bending-light"],
           ["The Human Eye and the Colourful World", "color-vision bending-light"],
-          ["Electricity", "circuit-construction-kit-dc ohms-law resistance-in-a-wire circuit-construction-kit-dc-virtual-lab"],
+          ["Electricity", "@ohms-law circuit-construction-kit-dc ohms-law resistance-in-a-wire circuit-construction-kit-dc-virtual-lab"],
           ["Magnetic Effects of Electric Current", "magnets-and-electromagnets faradays-electromagnetic-lab magnet-and-compass generator faradays-law"],
         ],
         bio: [
@@ -508,3 +508,19 @@ window.SIM_DOMAIN = (function () {
   for (const [domain, list] of Object.entries(groups)) list.split(" ").forEach((s) => (map[s] = domain));
   return map; // anything not listed is Maths
 })();
+
+// Our own labs, built for this site. Referenced from chapters as "@id".
+window.LABS = {
+  "ohms-law": { t: "Ohm's Law Lab", file: "labs/ohms-law.html", color: "sky", domain: "Physics",
+    blurb: "Turn the voltage and resistance dials, watch the charges speed up and the bulb glow, and plot your own V–I graph.",
+    tip: "Keep the resistance fixed and record four readings. What happens to V ÷ I each time?" },
+  "lens-mirror": { t: "Lens and Mirror Lab", file: "labs/lens-mirror.html", color: "teal", domain: "Physics",
+    blurb: "Slide an object in front of a lens or a curved mirror and see the rays build the image as you move.",
+    tip: "Start far away and walk the object towards the convex lens. Where does the image flip from real to virtual?" },
+  "pendulum": { t: "Pendulum Lab", file: "labs/pendulum.html", color: "coral", domain: "Physics",
+    blurb: "Pull the bob, let go and time the swing. Then take your pendulum to the Moon.",
+    tip: "Change the mass, then the length. Which one changes the time for one swing?" },
+  "triangle": { t: "Triangle Angles Lab", file: "labs/triangle.html", color: "violet", domain: "Maths",
+    blurb: "Drag the corners of a triangle anywhere you like. Can you ever make the angles add up to anything but 180°?",
+    tip: "Make a right-angled triangle, then an obtuse one. What stays the same about the three angles?" },
+};
