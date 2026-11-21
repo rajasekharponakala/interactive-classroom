@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Habitat Lab – Interactive Classroom</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/base.css">
+<link rel="stylesheet" href="../css/lab.css">
+<style>
+  :root { --accent: var(--teal); --accent-soft: var(--teal-soft); }
+  #toolbox { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0; margin-bottom: 4px; -webkit-overflow-scrolling: touch; }
+  .piece-thumb { display: inline-flex; align-items: center; gap: 4px; min-width: 90px; height: 30px; padding: 0 10px; font-size: 12px; border-radius: 999px; cursor: grab; box-shadow: var(--pop); white-space: nowrap; }
+  .box-gap { margin-top: 10px; }
+</style>
+</head>
+<body>
+<header class="lab-head"><h1>Habitat Lab 🌳🌵🌊</h1><span class="tag">Habitat Probes</span></header>
+<main class="lab">
+  <div class="stage"><canvas id="cv" aria-label="Four ecosystems: Forest, Desert, Pond, Ocean. Drag the animals to where they should live."></canvas>
+    <span class="hint" id="hint">Drag the animal into its right home</span>
+  </div>
+  <div class="panel">
+    <div class="box">
+      <h2>Drag animals here</h2>
+      <div class="box-gap" id="toolbox"></div>
+      <div class="reads">
+        <div class="read"><span>Animals placed</span><b id="score">0 of 10</b></div>
+        <div class="read"><span>Left for home</span><b id="wrong">–</b></div>
+      </div>
+    </div>
+    <div class="box">
+      <h2>Try it!</h2>
+      <ul class="note" style="list-style:none;margin:6px 0 0;padding:0">
+        <li>✔ A rabbit hops and chews grass. Where does it belong?</li>
+        <li>✔ A snake is cold — where would it hide?</li>
+        <li>✔ A whale is huge — does it live in the pond or the ocean?</li>
+      </ul>
+    </div>
+  </div>
+</main>
+<script src="lab.js"></script>
+<script>
+(function () {
+  const cv = document.getElementById("cv"), $ = (i) => document.getElementById(i);
+  // Grid: 0=Forest (top-left), 1=Desert (top-right), 2=Pond (bottom-left), 3=Ocean (bottom-right).
+  const ENVS = [["Forest", "#d9f4e2"], ["Desert", "#fff1c7"], ["Pond", "#dbe9ff"], ["Ocean", "#1f3866"]];
+  const ANIMALS = [
+    ["Rabbit", "🐇", "forest"], ["Deer", "🦌", "forest"], ["Snake", "🐍", "desert"],
+    ["Lizard", "🦎", "desert"], ["Crocodile", "🐊", "pond"], ["Whale", "🐋", "ocean"],
+    ["Crab", "🦀", "ocean"], ["Bamboo", "🎋", "forest"], ["Owl", "🦉", "forest"], ["Vulture", "🕊", "desert"],
+  ];
+  let drag = null, placed = [];
+  const envIdxAt = (x, y, w, h) => Math.min(3, Math.floor(y / (h / 2)) * 2 + Math.min(1, Math.floor(x / (w / 2))));
+  function toolbox() {
+    $("toolbox").innerHTML = ANIMALS.map((a) => '<div class="piece-thumb" data-s="' + a[0] + '">' + a[1] + " " + a[0] + "</div>").join("");
+    $("toolbox").querySelectorAll(".piece-thumb").forEach((el) => {
+      el.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        drag = { name: el.dataset.s, x: 0, y: 0 };
+        cv.setPointerCapture(e.pointerId);
+      });
+    });
+    redraw();
+  }
+  function redraw() {
+    const { ctx, w, h } = Lab.fit(cv);
+    ctx.clearRect(0, 0, w, h);
+    // environments
+    ENVS.forEach(([name], i) => {
+      const cx = (i % 2) * w / 2, cy = Math.floor(i / 2) * h / 2;
+      ctx.beginPath(); ctx.rect(cx, cy, w / 2, h / 2);
+      ctx.fillStyle = ENVS[i][1]; ctx.fill();
+      ctx.strokeStyle = Lab.css("--ink"); ctx.lineWidth = 2; ctx.stroke();
+      ctx.font = "800 15px " + Lab.css("--body"); ctx.fillStyle = Lab.css("--ink-2"); ctx.textAlign = "center";
+      ctx.fillText(name, cx + w / 4, cy + h / 4);
+    });
+    // placed animals
+    placed.forEach((p) => {
+      const idx = ENVS.findIndex(([n]) => n === p.env), cx = (idx % 2) * w / 2 + w / 4, cy = Math.floor(idx / 2) * h / 2 + h / 4;
+      ctx.beginPath(); ctx.arc(cx, cy, 12, 0, 7);
+      ctx.font = "800 24px"; ctx.fillStyle = Lab.css("--ink"); ctx.textAlign = "center"; ctx.fillText(p.emoji, cx, cy + 8);
+    });
+    // dragging preview
+    if (drag && Math.hypot(drag.x, drag.y) > 8) {
+      ctx.font = "800 24px"; ctx.fillStyle = Lab.css("--ink"); ctx.textAlign = "center";
+      ctx.fillText(drag.emoji, drag.x, drag.y);
+    }
+    $("score").textContent = placed.length + " of " + ANIMALS.length;
+    const unplaced = ANIMALS.filter((a) => !placed.find((p) => p.name === a[0])).length;
+    $("wrong").textContent = unplaced + " unplaced";
+  }
+  cv.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    const r = cv.getBoundingClientRect();
+    drag.x = e.clientX - r.left, drag.y = e.clientY - r.top;
+    redraw();
+  });
+  cv.addEventListener("pointerup", (e) => {
+    if (!drag) return;
+    cv.releasePointerCapture(e.pointerId);
+    const { w, h } = Lab.fit(cv);
+    const idx = envIdxAt(drag.x, drag.y, w, h);
+    const a = ANIMALS.find((a) => a[0] === drag.name);
+    if (a && a[2] === ENVS[idx][0].toLowerCase() && !placed.find((p) => p.name === drag.name))
+      placed.push({ name: drag.name, env: ENVS[idx][0], emoji: a[1] });
+    drag = null;
+    redraw();
+  });
+  Lab.fit(cv);
+  setTimeout(() => { toolbox(); redraw(); }, 30);
+})();
+</script>
+</body>
+</html>

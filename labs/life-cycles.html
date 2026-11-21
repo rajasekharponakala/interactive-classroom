@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Life Cycles Lab – Interactive Classroom</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/base.css">
+<link rel="stylesheet" href="../css/lab.css">
+<style>
+  :root { --accent: var(--leaf); --accent-soft: var(--leaf-soft); }
+  #toolbox { display: flex; gap: 6px; overflow-x: auto; flex-wrap: nowrap; padding: 4px 0; }
+  .piece-thumb { display: inline-block; min-width: 64px; width: 64px; height: 28px; padding: 0 4px; font-size: 11px; text-align: center; border-radius: 14px; cursor: grab; white-space: nowrap; }
+  #cv circle[stroke] { stroke-width: 2.5; }
+  .box-gap { margin-top: 8px; }
+</style>
+</head>
+<body>
+<header class="lab-head"><h1>Life Cycles Lab 🐣🦋🐸🌱</h1><span class="tag">Biology</span></header>
+<main class="lab">
+  <div class="stage"><canvas id="cv" aria-label="A ring. Drag the stages from the toolbox onto the ring in the right order."></canvas>
+    <span class="hint" id="hint">Drag the stages from the toolbox onto the ring in the right order</span>
+  </div>
+  <div class="panel">
+    <div class="box">
+      <h2>Choose a life cycle</h2>
+      <div class="pill-group" id="cycleSel" role="group" aria-label="Choose a life cycle"></div>
+    </div>
+    <div class="box">
+      <h2>Drag the stages</h2>
+      <div class="box-gap" id="toolbox"></div>
+      <div class="reads">
+        <div class="read"><span>Stages on the ring</span><b id="filled">0</b></div>
+        <div class="read"><span>Correct order?</span><b id="ok">Drag the stages.</b></div>
+      </div>
+    </div>
+    <div class="box">
+      <h2>Try it!</h2>
+      <ul class="note" style="list-style:none;margin:6px 0 0;padding:0">
+        <li>✔ Watch a chicken egg on a nest turn into a chick — and then into a laying chicken.</li>
+        <li>✔ The butterfly goes egg → caterpillar → cocoon → adult. Which parts happen in spring and summer?</li>
+        <li>✔ A seed sprouts (new plant) — do roots go first or leaves?</li>
+      </ul>
+    </div>
+  </div>
+</main>
+<script src="lab.js"></script>
+<script>
+(function () {
+  const cv = document.getElementById("cv"), $ = (i) => document.getElementById(i);
+  const CYCLES = {
+    chicken: [["Egg", "🥚"], ["Chick", "🐣"], ["Adult", "🐔"]],
+    butterfly: [["Egg", "🥚"], ["Caterpillar", "🐛"], ["Cocoon", "🌿"], ["Adult", "🦋"]],
+    frog: [["Egg", "🥚"], ["Tadpole", "🐸"], ["Adult", "🐸"]],
+    plant: [["Seed", "🌱"], ["Sprout", "🌿"], ["Leaf", "🌿"], ["Flower", "🌸"], ["Fruit", "🍎"]],
+  };
+  let cyc = "chicken", drag = null;
+  let placed = []; // { idx, name }
+  const targetOrder = () => CYCLES[cyc].map((s) => s[0]);
+  function setCycle(name) { cyc = name; placed = []; toolbox(); redraw(); }
+  function toolbox() {
+    const done = new Set(placed.map((p) => p.name));
+    const remaining = CYCLES[cyc].filter((s) => !done.includes(s[0]));
+    $("toolbox").innerHTML = remaining.map((s) => '<div class="piece-thumb" data-s="' + s[0] + '" draggable="true">' + s[1] + " " + s[0] + "</div>").join("");
+    $("toolbox").querySelectorAll(".piece-thumb").forEach((el) => {
+      el.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        drag = { name: el.dataset.s, x: 0, y: 0 };
+        cv.setPointerCapture(e.pointerId);
+      });
+    });
+    redraw();
+  }
+  function redraw() {
+    const { ctx, w, h } = Lab.fit(cv);
+    ctx.clearRect(0, 0, w, h);
+    const CX = w / 2, CY = h / 2, R = Math.min(w, h) * 0.34, S = w / 5.5;
+    const slots = CYCLES[cyc].length;
+    ctx.strokeStyle = Lab.css("--line"); ctx.lineWidth = 2; ctx.beginPath();
+    ctx.arc(CX, CY, R, 0, 2 * Math.PI); ctx.stroke();
+    CYCLES[cyc].forEach((s, i) => {
+      const a = i / slots * 2 * Math.PI - Math.PI / 2;
+      const px = CX + Math.cos(a) * R, py = CY + Math.sin(a) * R;
+      const p = placed.find((q) => q.idx === i);
+      ctx.beginPath(); ctx.arc(px, py, 12, 0, 2 * Math.PI);
+      ctx.fillStyle = p ? Lab.css("--sun") : Lab.css("--line"); ctx.fill();
+      ctx.strokeStyle = Lab.css("--ink"); ctx.stroke();
+      ctx.font = "800 13px " + Lab.css("--body"); ctx.fillStyle = Lab.css("--ink-2"); ctx.textAlign = "center";
+      ctx.fillText(s[1], px, py - 8);
+      ctx.font = "900 12px"; ctx.fillText(String(i + 1), px, py + 7);
+      if (p) { ctx.fillStyle = Lab.css("--ink"); ctx.font = "800 13px " + Lab.css("--body"); ctx.fillText(p.name, px, py + 25); }
+    });
+    if (drag && Math.hypot(drag.x, drag.y) > 30) {
+      const a = Math.atan2(drag.y, drag.x) + Math.PI / 2;
+      const px = CX + Math.cos(a) * R, py = CY + Math.sin(a) * R;
+      ctx.font = "800 20px"; ctx.fillStyle = Lab.css("--ink"); ctx.textAlign = "center";
+      ctx.fillText(drag.name, px, py);
+    }
+    $("filled").textContent = placed.length;
+    const names = placed.map((p) => p.name);
+    const ok = placed.length === slots && targetOrder().every((t, i) => names[i] === t);
+    const all = placed.length === slots;
+    $("ok").textContent = ok ? "✅ All stages in the right order!" : (all ? "🔁 Close! Re-check the order" : (names.length ? "Drag the remaining stages onto the ring." : "Drag a stage onto the ring."));
+    $("ok").style.color = ok ? "#3fbf6b" : "#ff6f61";
+  }
+  cv.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    const r = cv.getBoundingClientRect();
+    drag.x = e.clientX - r.left - cv.width / 2, drag.y = e.clientY - r.top - cv.height / 2;
+    redraw();
+  });
+  cv.addEventListener("pointerup", (e) => {
+    if (!drag) return;
+    cv.releasePointerCapture(e.pointerId);
+    const { w, h } = Lab.fit(cv);
+    const CX = w / 2, CY = h / 2, R = Math.min(w, h) * 0.34;
+    const dx = drag.x, dy = drag.y;
+    if (Math.hypot(dx, dy) > 30) {
+      const slots = CYCLES[cyc].length;
+      const a = Math.atan2(dy, dx) + Math.PI / 2;
+      let idx = Math.round((a / (2 * Math.PI) * slots + slots) % slots);
+      if (!placed.find((p) => p.idx === idx)) placed.push({ idx, name: drag.name });
+      placed.sort((a, b) => a.idx - b.idx);
+    }
+    drag = null;
+    toolbox(); redraw();
+  });
+  Lab.pills("cycleSel", (v) => setCycle(v));
+  Lab.fit(cv);
+  setTimeout(() => { toolbox(); redraw(); }, 30);
+})();
+</script>
+</body>
+</html>

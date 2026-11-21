@@ -69,7 +69,7 @@ h1 .hl { color: var(--ink); background: linear-gradient(90deg, var(--mango) 0%, 
 .lab-go { margin-top: auto; padding-top: 8px; font-weight: 900; color: var(--ink); display: flex; align-items: center; gap: 6px; }
 [data-color="sky"] { --c: var(--sky); --cs: var(--sky-soft); } [data-color="teal"] { --c: var(--teal); --cs: var(--teal-soft); }
 [data-color="coral"] { --c: var(--coral); --cs: var(--coral-soft); } [data-color="violet"] { --c: var(--violet); --cs: var(--violet-soft); }
-[data-color="leaf"] { --c: var(--leaf); --cs: var(--leaf-soft); } [data-color="mango"] { --c: var(--mango); --cs: var(--sun-soft); }
+[data-color="leaf"] { --c: var(--leaf); --cs: var(--leaf-soft); } [data-color="mango"] { --c: var(--mango); --cs: var(--sun-soft); } [data-color="pink"] { --c: var(--pink); --cs: var(--pink-soft); }
 
 /* ---- class + subject pickers ---- */
 .class-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }

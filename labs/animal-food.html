@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Animal Food Lab – Interactive Classroom</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/base.css">
+<link rel="stylesheet" href="../css/lab.css">
+<style>
+  :root { --accent: var(--pink); --accent-soft: var(--pink-soft); }
+  #toolbox { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0; margin-bottom: 4px; -webkit-overflow-scrolling: touch; }
+  .piece-thumb { display: inline-flex; align-items: center; gap: 4px; min-width: 70px; height: 30px; padding: 0 10px; font-size: 12px; border-radius: 999px; cursor: grab; box-shadow: var(--pop); white-space: nowrap; }
+  #cv { cursor: grab; }
+</style>
+</head>
+<body>
+<header class="lab-head"><h1>Animal Food Lab 🥩🥗</h1><span class="tag">Who eats what?</span></header>
+<main class="lab">
+  <div class="stage"><canvas id="cv" aria-label="Animals are drawn here. Drag their food from the toolbox onto them."></canvas>
+    <span class="hint" id="hint">Drag the food onto the animal it belongs to</span>
+  </div>
+  <div class="panel">
+    <div class="box">
+      <h2>Drag food to animals</h2>
+      <div id="toolbox" style="margin-top:8px"></div>
+      <div class="reads" style="margin-top:10px">
+        <div class="read"><span>Animals fed</span><b id="fed">0 of 10</b></div>
+      </div>
+    </div>
+    <div class="box">
+      <h2>Try it!</h2>
+      <ul class="note" style="list-style:none;margin:6px 0 0;padding:0">
+        <li>✔ Rabbit: which food do they eat — plants?</li>
+        <li>✔ Hawk or owl: meat?</li>
+        <li>✔ Spider: bugs!</li>
+      </ul>
+    </div>
+  </div>
+</main>
+<script src="lab.js"></script>
+<script>
+(function () {
+  const cv = document.getElementById("cv"), $ = (i) => document.getElementById(i);
+  // Animals: [name, emoji, allowed food key]
+  const ANIMALS = [
+    ["Rabbit", "🐇", "plants"], ["Deer", "🦌", "plants"], ["Cow", "🐮", "plants"], ["Bamboo", "🎋", "plants"],
+    ["Caterpillar", "🐛", "plants"], ["Beetle", "🪲", "seeds"], ["Snake", "🐍", "meat"], ["Vulture", "🕊", "meat"],
+    ["Fish", "🐟", "fish"], ["Owl", "🦉", "bugs"],
+  ];
+  // Food: [name, emoji, key]
+  const FOODS = [
+    ["Plants", "🌿", "plants"], ["Hay", "🌾", "plants"], ["Leaves", "🍃", "leaves"], ["Vegetables", "🍆", "plants"],
+    ["Grass", "🌱", "plants"], ["Seeds", "🌱", "seeds"], ["Leaf", "🍂", "leaves"], ["Bugs", "🐛", "bugs"],
+    ["Meat", "🥩", "meat"], ["Fish", "🐟", "fish"],
+  ];
+  let drag = null, fed = [];
+  const hitAnimal = (x, y) => ANIMALS.find((a, i) => Math.hypot(x - ANIMAL_X[i][0], y - ANIMAL_X[i][1]) < 30);
+  const ENV_Y = h => h * 0.15;
+  let ANIMAL_X = [];
+  function toolbox() {
+    $("toolbox").innerHTML = FOODS.map((f) => '<div class="piece-thumb" data-s="' + f[0] + '">' + f[1] + " " + f[0] + "</div>").join("");
+    $("toolbox").querySelectorAll(".piece-thumb").forEach((el) => {
+      el.addEventListener("pointerdown", (e) => { e.preventDefault(); drag = { name: el.dataset.s, x: 0, y: 0 }; cv.setPointerCapture(e.pointerId); });
+    });
+    redraw();
+  }
+  function redraw() {
+    const { ctx, w, h } = Lab.fit(cv);
+    ctx.clearRect(0, 0, w, h);
+    ANIMALS.forEach((a, i) => {
+      const x = 40 + i * (w - 80) / 9, y = ENV_Y(h) + 12;
+      ctx.font = "800 28px"; ctx.textAlign = "center"; ctx.fillStyle = Lab.css("--ink"); ctx.fillText(a[1], x, y + 2);
+      ctx.font = "800 15px " + Lab.css("--body"); ctx.fillText(a[0], x, y + 18);
+      ctx.beginPath(); ctx.arc(x, y, 22, 0, 7); ctx.stroke();
+      // check food marker: " Fed!" if fed
+      if (fed.find((f) => f.name === a[0])) { ctx.fillStyle = Lab.css("--leaf"); ctx.fillText("✅", x, y - 2); }
+    });
+    if (drag && Math.hypot(drag.x, drag.y) > 6) {
+      ctx.font = "800 18px"; ctx.fillStyle = Lab.css("--ink"); ctx.textAlign = "center";
+      const a = ANIMALS.find((a) => a[0] === drag.name); ctx.fillText(drag.emoji, drag.x, drag.y - 18);
+    }
+    $("fed").textContent = fed.length + " of " + ANIMALS.length;
+  }
+  cv.addEventListener("pointermove", (e) => { if (!drag) return; const r = cv.getBoundingClientRect(); drag.x = e.clientX - r.left, drag.y = e.clientY - r.top; redraw(); });
+  cv.addEventListener("pointerup", (e) => {
+    if (!drag) return; cv.releasePointerCapture(e.pointerId);
+    const a = hitAnimal(drag.x, drag.y);
+    const f = FOODS.find((f) => f[0] === drag.name);
+    if (a && f && f[2] === a[2] && !fed.find((g) => g.name === a[0])) fed.push({ name: a[0] });
+    drag = null; redraw();
+  });
+  // compute animal positions
+  Lab.fit(cv);
+  setTimeout(() => {
+    const { w, h } = Lab.fit(cv);
+    ANIMAL_X = ANIMALS.map((a, i) => [40 + i * (w - 80) / 9, ENV_Y(h) + 12]);
+    toolbox();
+  }, 30);
+})();
+</script>
+</body>
+</html>

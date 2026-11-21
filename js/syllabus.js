@@ -529,4 +529,13 @@ window.LABS = {
   "protractor": { t: "Protractor Lab", file: "labs/protractor.html", color: "coral", domain: "Maths",
     blurb: "Drag the arm to make angles. Read the degrees and try 90°, 180°, or a half turn.",
     tip: "Drag the red arm until it reads 90°. How many 90° angles make a straight line?" },
+  "life-cycles": { t: "Life Cycles Lab", file: "labs/life-cycles.html", color: "leaf", domain: "Biology",
+    blurb: "Drag the stages onto the ring in the right order — chicken, butterfly, frog, or a plant.",
+    tip: "The plant cycle: seed → sprout → leaves → flower → fruit. Roots go first, flowers last." },
+  "habitat": { t: "Habitat Lab", file: "labs/habitat.html", color: "teal", domain: "Biology",
+    blurb: "Drag the animal into its right home — forest, desert, pond or ocean.",
+    tip: "Find where the animal belongs! Does the snake belong in the forest or the desert?" },
+  "animal-food": { t: "Animal Food Lab", file: "labs/animal-food.html", color: "pink", domain: "Biology",
+    blurb: "Drag the food onto the animal — plants, meat, fish or seeds?",
+    tip: "Who eats grass? Who eats bugs? Drag the food to the animal and see!" },
 };
