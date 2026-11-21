@@ -13,7 +13,7 @@
 <body>
 <header class="lab-head"><h1>Lens and Mirror Lab</h1><span class="tag">Light</span></header>
 <main class="lab">
-  <div class="stage"><canvas id="cv" tabindex="0" aria-label="Ray diagram. Drag the object arrow left or right, or use the arrow keys."></canvas><span class="hint" id="hint">Drag the arrow</span></div>
+  <div class="stage"><canvas id="cv" tabindex="0" aria-label="Ray diagram. Drag the object arrow left or right, or use the arrow keys."></canvas><span class="hint" id="hint">Drag the arrow left or right to move the object</span></div>
   <div class="panel">
     <div class="box">
       <h2>Choose</h2>
@@ -115,13 +115,13 @@
     arrow(X(T[0]), cy, Y(T[1]), Lab.css("--sun"), ink, 1, "Object");
     if (!s.inf && Math.abs(I[0]) < HALF * 1.6) arrow(X(I[0]), cy, Y(I[1]), Lab.css("--leaf"), ink, s.real ? 1 : 0.55, "Image");
     function arrow(x, y0, y1, fill, stroke, alpha, label) {
-      const dir = y1 < y0 ? -1 : 1, hh = Math.min(16, Math.abs(y1 - y0) * 0.6);
-      ctx.globalAlpha = alpha; ctx.fillStyle = fill; ctx.strokeStyle = stroke; ctx.lineWidth = 2.5;
-      const hw = Math.min(13, hh * 0.9), sw = Math.min(5, hw * 0.4);
+      const dir = y1 < y0 ? -1 : 1, hh = Math.min(20, Math.abs(y1 - y0) * 0.7);
+      ctx.globalAlpha = alpha; ctx.fillStyle = fill; ctx.strokeStyle = stroke; ctx.lineWidth = 3;
+      const hw = Math.min(16, hh * 0.95), sw = Math.min(6, hw * 0.4);
       ctx.beginPath(); ctx.moveTo(x - sw, y0); ctx.lineTo(x - sw, y1 - dir * hh); ctx.lineTo(x - hw, y1 - dir * hh); ctx.lineTo(x, y1);
       ctx.lineTo(x + hw, y1 - dir * hh); ctx.lineTo(x + sw, y1 - dir * hh); ctx.lineTo(x + sw, y0); ctx.closePath(); ctx.fill(); ctx.stroke();
-      ctx.globalAlpha = 1; ctx.fillStyle = stroke; ctx.font = "800 13px " + body;
-      ctx.fillText(label, x, dir < 0 ? y0 + 36 : y0 - 26);
+      ctx.globalAlpha = 1; ctx.fillStyle = stroke; ctx.font = "800 15px " + body;
+      ctx.fillText(label, x, dir < 0 ? y0 + 38 : y0 - 30);
     }
   }
   Lab.pills("kind", (v) => { kind = v; update(); });

@@ -57,7 +57,7 @@ svg text { font-family: var(--body); font-weight: 900; fill: var(--ink); }
   let P = START.map((p) => p.slice());
   const handles = P.map((_, i) => {
     const c = document.createElementNS(NS, "circle");
-    c.setAttribute("r", 16); c.setAttribute("class", "vx"); c.setAttribute("fill", COL[i]); c.setAttribute("stroke", "var(--ink)"); c.setAttribute("stroke-width", 4);
+    c.setAttribute("r", 20); c.setAttribute("class", "vx"); c.setAttribute("fill", COL[i]); c.setAttribute("stroke", "var(--ink)"); c.setAttribute("stroke-width", 5); c.setAttribute("filter", "drop-shadow(0 0 8px rgba(0,0,0,.25))");
     c.setAttribute("tabindex", 0); c.setAttribute("role", "slider"); c.setAttribute("aria-label", "Corner " + NAME[i] + ". Use arrow keys to move.");
     $("handles").appendChild(c);
     c.addEventListener("pointerdown", (e) => { c.setPointerCapture(e.pointerId); c._d = true; $("hint").style.opacity = 0; });
@@ -69,7 +69,7 @@ svg text { font-family: var(--body); font-weight: 900; fill: var(--ink); }
     const up = () => (c._d = false);
     c.addEventListener("pointerup", up); c.addEventListener("pointercancel", up);
     c.addEventListener("keydown", (e) => {
-      const d = { ArrowLeft: [-8, 0], ArrowRight: [8, 0], ArrowUp: [0, -8], ArrowDown: [0, 8] }[e.key];
+      const d = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, -10], ArrowDown: [0, 10] }[e.key];
       if (d) { tryMove(i, P[i][0] + d[0], P[i][1] + d[1]); e.preventDefault(); }
     });
     return c;

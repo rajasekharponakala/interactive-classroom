@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fractions Lab – Interactive Classroom</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/base.css">
+<link rel="stylesheet" href="../css/lab.css">
+<style>
+  :root { --accent: var(--violet); --accent-soft: var(--violet-soft); }
+  .pieces { display: flex; gap: 8px; flex-wrap: wrap; }
+  .piece-thumb { width: 30px; height: 30px; border: 2px solid var(--ink); border-radius: 8px; font-size: 11px; font-weight: 900; cursor: grab; }
+</style>
+</head>
+<body>
+<header class="lab-head"><h1>Fraction Friends Lab 🧩</h1><span class="tag">Fractions</span></header>
+<main class="lab">
+  <div class="stage"><canvas id="cv" aria-label="A long bar with a target fraction shaded in blue. Pieces with 1/2, 1/4, 1/8 and 1/16 lengths sit next to it."></canvas>
+    <span class="hint" id="hint">Drag a piece onto the bar</span>
+  </div>
+  <div class="panel">
+    <div class="box">
+      <h2>Your pieces</h2>
+      <div class="pieces" id="pieces"></div>
+    </div>
+    <div class="box">
+      <h2>Target</h2>
+      <div class="reads">
+        <div class="read"><span>Target fills</span><b id="tgtShow"></b></div>
+        <div class="read"><span>Bar is filled</span><b id="fillShow">0 of 16</b></div>
+        <div class="read"><span>Pieces placed</span><b id="nPieces">0</b></div>
+      </div>
+      <div class="pill-group" id="targets" role="group" aria-label="Choose a target fraction"></div>
+      <div class="reads" style="margin-top:8px">
+        <div class="read"><span>Try to match</span><b id="tryShow"></b></div>
+        <button id="resetBtn" class="btn" type="button">Reset bar</button>
+      </div>
+      <p class="note" id="msg">Drag pieces onto the bar. Move a piece along the bar and drop it — it snaps to the grid.</p>
+    </div>
+    <div class="box">
+      <h2>Try it!</h2>
+      <ul class="note" style="list-style:none;margin:6px 0 0;padding:0">
+        <li>✔ Drag a piece and drop it on the bar.</li>
+        <li>✔ Make two different pieces cover the same part of the bar — 1/2, 2/4, 4/8 look the same!</li>
+        <li>✔ Explain to a friend: how many 1/8 pieces do you need for 1/2?</li>
+      </ul>
+    </div>
+  </div>
+</main>
+<script src="lab.js"></script>
+<script>
+(function () {
+  const cv = document.getElementById("cv"), $ = (i) => document.getElementById(i);
+  const SEG = 16;
+  const state = { pieces: [], drag: null };
+  const PIECES = [
+    { name: "½ (8)", color: "#ff8e5f", value: 8 },
+    { name: "¼ (4)", color: "#f6c86f", value: 4 },
+    { name: "⅛ (2)", color: "#4d6ef6", value: 2 },
+    { name: "⅒ (1)", color: "#3bd05e", value: 1 },
+  ];
+  let target = { n: 8, d: SEG };
+  const TARGETS = [
+    [1, 2], [3, 4], [5, 8], [3, 8], [1, 8], [1, 4], [2, 4], [1, 16], [2, 8],
+  ];
+  const tgtEl = $("targets");
+  tgtEl.innerHTML = TARGETS.map(([n, d]) => '<button type="button" class="pill" data-v="' + n + "/" + d + '">' + n + "/" + d + "</button>").join("");
+  tgtEl.addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    const [n, d] = b.dataset.v.split("/").map(Number);
+    tgtEl.querySelectorAll("button").forEach((x) => (x.setAttribute("aria-pressed", x === b)));
+    setTarget(n, d);
+  });
+  const toolbox = document.getElementById("pieces");
+  PIECES.forEach((p) => {
+    const el = document.createElement("div");
+    el.className = "piece-thumb";
+    el.style.background = p.color;
+    el.textContent = p.name;
+    el.title = "drag me";
+    toolbox.appendChild(el);
+    el.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      const r = el.getBoundingClientRect();
+      state.drag = { id: null, x: 0, v: p.value, w: 0 };
+      document.body.addEventListener("pointermove", onMove);
+      document.body.addEventListener("pointerup", onUp, { once: true });
+    });
+  });
+  function onMove(e) { state.drag.x = e.clientX; }
+  function onUp(e) {
+    document.body.removeEventListener("pointermove", onMove);
+    const r = cv.getBoundingClientRect();
+    const x = e.clientX - r.left, y = e.clientY - r.top;
+    const { w: cw, h } = Lab.fit(cv);
+    const unit = cw / SEG;
+    if (y > 6 && y < h - 6 && x > 0 && x < cw) {
+      const pos = Math.max(0, Math.min(cw - unit, Math.floor(x / unit) * unit));
+      state.pieces.push({ pos, v: state.drag.v });
+      redraw();
+    }
+    state.drag = null;
+  }
+  function redraw() {
+    const { ctx, w, h } = Lab.fit(cv);
+    ctx.clearRect(0, 0, w, h);
+    ctx.strokeStyle = Lab.css("--line"); ctx.lineWidth = 1;
+    ctx.strokeRect(0, 0, w, h);
+    // target fill
+    ctx.fillStyle = "#cbe7fb"; ctx.fillRect(0, 6, Math.round(target.n / target.d * w), h - 12);
+    // pieces
+    state.pieces.forEach((p) => {
+      ctx.fillStyle = "#e3e3e3"; ctx.fillRect(p.pos, 6, Math.max(1, Math.round(p.v / SEG * w)), h - 12);
+    });
+    // summary
+    const filled = state.pieces.reduce((s, p) => s + p.v, 0);
+    const tgt = Math.round(target.n / target.d * SEG);
+    $("tgtShow").textContent = target.n + "/" + target.d;
+    $("fillShow").textContent = filled + " of " + SEG;
+    $("nPieces").textContent = state.pieces.length;
+    const ok = filled >= tgt;
+    $("msg").textContent = ok ? "🎉 You filled the bar! (pieces: " + state.pieces.length + ")" : (filled > 0 ? "Getting there — filled: " + Math.round(filled / SEG * 100) + "% of the bar." : "Drag a piece onto the bar.");
+    $("msg").style.fontWeight = ok ? "900" : "700";
+  }
+  window.setTarget = (n, d) => { target = { n, d }; redraw(); };
+  $("resetBtn").onclick = () => { state.pieces = []; redraw(); };
+  Lab.fit(cv); setTimeout(() => { redraw(); }, 40);
+})();
+</script>
+</body>
+</html>

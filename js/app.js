@@ -1,7 +1,7 @@
 (function () {
   "use strict";
   const SIMS = window.PHET_SIMS, BOARDS = window.BOARDS, SUBJECTS = window.SUBJECTS, LABS = window.LABS;
-  const TIPS = window.SIM_TIPS, DOMAIN = window.SIM_DOMAIN;
+  const TIPS = window.SIM_TIPS, DOMAIN = window.SIM_DOMAIN, EXPS = window.SYLL_EXP || {};
   const PHET = "https://phet.colorado.edu";
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -11,6 +11,11 @@
   const title = (id) => (isOwn(id) ? LABS[id.slice(1)].t : SIMS[id] ? SIMS[id].t : "");
   const theme = () => document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
   const swap = (fn) => (document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches ? document.startViewTransition(fn) : fn());
+  // Kid-friendly emoji per domain, shown as colour-free badges.
+  const EMOJI = { Physics: "⚡", Chemistry: "🧪", Biology: "🌿", Maths: "📐", "Earth science": "🌍" };
+  const DOT = ["🌕", "🌗", "🌖", "🌒", "🌓", "🌔"]; // for gaps list circles, unused now
+  const gapExp = (b, c, s, i) => EXPS[b + "." + c + "." + s + "." + i] || [];
+  const micro = (q, t) => (q ? "<mark>" + esc(t.slice(t.toLowerCase().indexOf(q), t.toLowerCase().indexOf(q) + q.length)) + "</mark>" : esc(t));
 
   // Small drawings for our own labs.
   const ART = {
@@ -18,6 +23,8 @@
     "lens-mirror": '<svg viewBox="0 0 120 72" aria-hidden="true"><path d="M4 40h112" stroke="var(--ink-3)" stroke-width="2"/><path d="M60 8q14 32 0 60q-14-28 0-60z" fill="var(--teal-soft)" stroke="var(--ink)" stroke-width="3.5" stroke-linejoin="round"/><path d="M20 20H60L104 58M20 20L104 58" fill="none" stroke="var(--coral)" stroke-width="3" stroke-linecap="round"/><path d="M20 40V20m-6 7 6-8 6 8" fill="none" stroke="var(--ink)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M104 40v18m-5-6 5 7 5-7" fill="none" stroke="var(--leaf)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     "pendulum": '<svg viewBox="0 0 120 72" aria-hidden="true"><rect x="36" y="4" width="48" height="7" rx="3.5" fill="var(--ink)"/><path d="M60 10 34 52" stroke="var(--ink)" stroke-width="3"/><path d="M60 10v46M60 10l26 42" stroke="var(--ink-3)" stroke-width="2" stroke-dasharray="4 5"/><circle cx="32" cy="55" r="12" fill="var(--coral)" stroke="var(--ink)" stroke-width="3.5"/></svg>',
     "triangle": '<svg viewBox="0 0 120 72" aria-hidden="true"><path d="M60 8 14 64h92z" fill="var(--violet-soft)" stroke="var(--ink)" stroke-width="4" stroke-linejoin="round"/><path d="M60 8l-9 11a14 14 0 0 0 18 0z" fill="var(--coral)" stroke="var(--ink)" stroke-width="2.5" stroke-linejoin="round"/><path d="M14 64h16a16 16 0 0 0-6-12z" fill="var(--sky)" stroke="var(--ink)" stroke-width="2.5" stroke-linejoin="round"/><path d="M106 64H90a16 16 0 0 1 6-12z" fill="var(--leaf)" stroke="var(--ink)" stroke-width="2.5" stroke-linejoin="round"/></svg>',
+    "fractions": '<svg viewBox="0 0 120 72" aria-hidden="true"><rect x="10" y="10" width="95" height="18" fill="none" stroke="var(--ink)" stroke-width="3" rx="4"/><rect x="10" y="22" width="48" height="18" fill="#ff9a6c" stroke="var(--ink)" stroke-width="3" rx="4"/><rect x="58" y="22" width="24" height="18" fill="#f6c86f" stroke="var(--ink)" stroke-width="3" rx="4"/><rect x="82" y="22" width="9" height="18" fill="#4d6ef6" stroke="var(--ink)" stroke-width="3" rx="4"/><rect x="91" y="22" width="9" height="18" fill="#3bd05e" stroke="var(--ink)" stroke-width="3" rx="4"/><text x="20" y="8" text-anchor="start" font-size="13" font-weight="900" fill="var(--ink-3)" transform="translate(0, 9)">½ ½ ¼ ⅛ ⅒</text></svg>',
+    "protractor": '<svg viewBox="0 0 120 72" aria-hidden="true"><circle cx="36" cy="36" r="20" fill="none" stroke="var(--coral)" stroke-width="3" stroke-dasharray="1 2"/><circle cx="36" cy="36" r="8" fill="var(--coral)"/><path d="M36 36l-16 16" stroke="var(--coral)" stroke-width="4" stroke-linecap="round"/><text x="30" y="8" font-size="12" font-weight="900" fill="var(--ink-2)">90°</text></svg>',
   };
 
   // ---------- state, kept in the URL hash so a view can be shared ----------
@@ -92,9 +99,10 @@
 
   // ---------- chapters ----------
   function hl(text, q) {
-    if (!q) return esc(text);
-    const i = text.toLowerCase().indexOf(q);
-    return i < 0 ? esc(text) : esc(text.slice(0, i)) + "<mark>" + esc(text.slice(i, i + q.length)) + "</mark>" + esc(text.slice(i + q.length));
+    const t = String(text).toLowerCase(); const w = String(q).trim().toLowerCase();
+    if (!w) return esc(text);
+    const i = t.indexOf(w);
+    return i < 0 ? esc(text) : esc(text.slice(0, i)) + "<mark>" + esc(text.slice(i, i + w.length)) + "</mark>" + esc(text.slice(i + w.length));
   }
   function simTile(id, ctx, q) {
     if (isOwn(id)) {
@@ -106,7 +114,15 @@
     if (!S) return "";
     return '<button type="button" class="sim" data-sim="' + id + '" data-ctx="' + esc(ctx) + '"><span class="thumb"><span class="ph">' + esc(S.t) + '</span><img loading="lazy" alt="" src="' +
       PHET + "/sims/html/" + id + "/latest/" + id + '-600.png" onerror="this.remove()"></span><span class="sim-body"><span class="sim-name">' + hl(S.t, q) +
-      '</span><span class="sim-tags"><span class="tagc">' + (DOMAIN[id] || "Maths") + '</span><span class="tagc">PhET</span>' + (S.te ? '<span class="tagc">తెలుగు</span>' : "") + "</span></span></button>";
+      '</span><span class="sim-tags"><span class="tagc">' + (EMOJI[DOMAIN[id] || "Maths"] || "") + " " + (DOMAIN[id] || "Maths") + '</span><span class="tagc">PhET</span>' + (S.te ? '<span class="tagc">తెలుగు</span>' : "") + "</span></span></button>";
+  }
+  function gapExpItem(b, x) {
+    const list = gapExp(b, x.cls, x.s, x.i);
+    const items = list.length ? list.map((e) =>
+      '<span class="gap-exp"><span class="gap-dot">➜</span><span><strong>' + esc(e[0]) + "</strong><em>" + esc(e[1]) + "</em></span></span>").join("") :
+      '<span class="gap-exp"><span class="gap-dot">📝</span><span><em>Try a mini model, a field note or a video: plan one activity for this chapter.</em></span></span>';
+    return '<li><span class="gap-head"><i>' + (x.i + 1) + "</i>" + esc(x.c[0]) + "</span>" +
+      '<span class="exp-list">' + items + "</span></li>";
   }
   function renderChapters() {
     const B = BOARDS[state.board], q = state.q.trim().toLowerCase();
@@ -117,17 +133,20 @@
     $("explore").dataset.subj = q ? "" : state.subj;
     $("exploreSub").textContent = B.name + " · " + B.note + ".";
     $("progress").innerHTML = q
-      ? "<span><b>" + items.length + "</b> " + (items.length === 1 ? "chapter matches" : "chapters match") + " “" + esc(state.q.trim()) + "” in " + esc(B.name) + "</span>"
+      ? '<span><b>' + items.length + "</b> " + (items.length === 1 ? "chapter matches" : "chapters match") + " “" + esc(state.q.trim()) + "” in " + esc(B.name) + "</span>"
       : "<span><b>" + n.covered + "</b> of <b>" + n.total + '</b> chapters have a simulation</span><span class="meter" role="img" aria-label="' + p + ' percent"><i style="width:' + p + '%"></i></span><b>' + p + "%</b>";
     const withSims = items.filter((x) => x.c[1]), gaps = items.filter((x) => !x.c[1]);
     $("chapters").innerHTML = withSims.length ? withSims.map((x, k) => {
       const ctx = "Class " + x.cls + " · " + SUBJECTS[x.s].name + " · " + x.c[0];
       return '<li class="chapter" data-subj="' + x.s + '" style="--i:' + Math.min(k, 10) + '"><div class="ch-head"><span class="num" aria-hidden="true">' + (x.i + 1) + "</span><div>" +
-        (q ? '<p class="where">Class ' + x.cls + " · " + esc(SUBJECTS[x.s].name) + "</p>" : "") + "<h3>" + hl(x.c[0], q) + '</h3></div></div><div class="sims">' +
+        (q ? '<p class="where">Class ' + x.cls + " · " + esc(SUBJECTS[x.s].name) + "</p>" : "") + "<h3>" + esc(x.c[0]) + '</h3></div></div><div class="sims">' +
         simsOf(x.c).map((s) => simTile(s, ctx, q)).join("") + "</div></li>";
-    }).join("") : '<li class="empty">' + (q ? "Nothing matches that search. Try a shorter word." : "No simulations for these chapters yet.") + "</li>";
-    $("gaps").innerHTML = gaps.length ? "<h3>No simulation yet (" + gaps.length + ")</h3><p>Plan a hands-on activity, model or video for these chapters.</p><ul class=\"gap-list\">" +
-      gaps.map((x) => "<li><i>" + (q ? x.cls + "·" : "") + (x.i + 1) + "</i>" + hl(x.c[0], q) + "</li>").join("") + "</ul>" : "";
+    }).join("") : '<li class="empty" role="status">' + (q ? "Nothing matches that search. Try a shorter word like “magnet”, “circuit”, “fractions”…" : "No simulations for these chapters yet.") + "</li>";
+    $("gaps").innerHTML = gaps.length ? '<h3>' + gaps.length + " more chapter(s) — you can try a hands-on experiment for each</h3>" +
+      "<ul class=\"gap-list\">" + gaps.map((x) => gapExpItem(state.board, x)).join("") + "</ul>" : "";
+    if (!withSims.length && !gaps.length && q) $("chapters").innerHTML = '<li class="empty" role="status">No chapters match “' + esc(q) + '”. Try a shorter word.</li>';
+    if (!gaps.length && !q) $("gaps").innerHTML = '<h3 style="display:none"></h3>';
+    if (!gaps.length && q) $("gaps").innerHTML = "";
   }
   document.addEventListener("click", (e) => {
     const b = e.target.closest("[data-sim]");
@@ -227,7 +246,6 @@
   player.addEventListener("click", (e) => { if (e.target === player) player.close(); });
   $("closeBtn").onclick = () => player.close();
   $("fsBtn").onclick = () => { document.fullscreenElement ? document.exitFullscreen() : $("stage").requestFullscreen && $("stage").requestFullscreen(); };
-
   $("themeBtn").onclick = () => {
     document.documentElement.dataset.theme = theme() === "dark" ? "light" : "dark";
     try { localStorage.setItem("ic-theme", document.documentElement.dataset.theme); } catch (e) {}

@@ -523,4 +523,10 @@ window.LABS = {
   "triangle": { t: "Triangle Angles Lab", file: "labs/triangle.html", color: "violet", domain: "Maths",
     blurb: "Drag the corners of a triangle anywhere you like. Can you ever make the angles add up to anything but 180°?",
     tip: "Make a right-angled triangle, then an obtuse one. What stays the same about the three angles?" },
+  "fractions": { t: "Fraction Friends Lab", file: "labs/fractions.html", color: "violet", domain: "Maths",
+    blurb: "Drag fraction pieces onto the bar to reach the target — see why different pieces can fill the same part.",
+    tip: "Drag a ⅛ piece onto a target of 1/2. How many do you need? Why is it the same as 4/8?" },
+  "protractor": { t: "Protractor Lab", file: "labs/protractor.html", color: "coral", domain: "Maths",
+    blurb: "Drag the arm to make angles. Read the degrees and try 90°, 180°, or a half turn.",
+    tip: "Drag the red arm until it reads 90°. How many 90° angles make a straight line?" },
 };

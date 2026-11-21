@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Protractor Lab – Interactive Classroom</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/base.css">
+<link rel="stylesheet" href="../css/lab.css">
+<style>
+  :root { --accent: var(--coral); --accent-soft: var(--coral-soft); }
+  .angle-box { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+  #arc { stroke: var(--coral); stroke-width: 3; fill: none; }
+</style>
+</head>
+<body>
+<header class="lab-head"><h1>Protractor Lab 📐</h1><span class="tag">Measuring angles</span></header>
+<main class="lab">
+  <div class="stage">
+    <canvas id="cv" aria-label="A protractor-style angle: a fixed arm to the right and a movable arm that you drag. The angle between them is measured in degrees."></canvas>
+    <span class="hint" id="hint">Drag the red arm to move the angle</span>
+  </div>
+  <div class="panel">
+    <div class="box">
+      <h2>Read the angle</h2>
+      <div class="reads">
+        <div class="read"><span>Moved arm</span><b id="val"></b></div>
+        <div class="read"><span>Classification</span><b id="cls">–</b></div>
+        <div class="read"><span>Predict</span><b id="pred">–</b></div>
+      </div>
+      <p class="note" id="note">Drag the arm around. Acute = between 0° and 90°. Right = 90°. Obtuse = between 90° and 180°.</p>
+    </div>
+    <div class="box">
+      <h2>Try it!</h2>
+      <ul class="note" style="list-style:none;margin:6px 0 0;padding:0">
+        <li>✔ Make the angle exactly 90° — is it a right angle?</li>
+        <li>✔ Make a 10° angle. Now rotate it to 100°. What changed?</li>
+        <li>✔ Count: how many 90° angles fit in a full circle (360°)?</li>
+      </ul>
+    </div>
+  </div>
+</main>
+<script src="lab.js"></script>
+<script>
+(function () {
+  const cv = document.getElementById("cv"), $ = (i) => document.getElementById(i);
+  const W = 400, H = 400, R = 150;
+  let theta = 60; // degrees from the fixed arm (x axis)
+  function setTheta(t, opts) {
+    t = ((t + 180) % 360 + 360) % 360;
+    theta = t;
+    update();
+    if (opts && opts.setTerm) { cv.dispatchEvent(new Event("angle-set", { detail: theta })); }
+  }
+  function classification() {
+    if (Math.abs(theta - 90) < 1) return "Right angle";
+    if (theta < 90) return "Acute angle";
+    if (theta > 90) return "Obtuse angle";
+    return "Straight angle";
+  }
+  function update() {
+    $("val").textContent = theta.toFixed(0) + "°";
+    $("cls").textContent = classification();
+    $("pred").textContent = theta > 0 ? Math.round(theta / 90) + " × 90° fills the circle around it" : "";
+    draw();
+  }
+  function draw() {
+    const { ctx, w, h } = Lab.fit(cv);
+    ctx.clearRect(0, 0, w, h);
+    const sx = w / W, sy = h / H, CX = w / 2, CY = h / 2;
+    const tr = (d) => ({ x: CX + Math.cos(d * Math.PI / 180) * R * sx, y: CY - Math.sin(d * Math.PI / 180) * R * sy });
+    // static arm at 0°
+    ctx.strokeStyle = Lab.css("--line"); ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(CX - R * sx, CY); ctx.lineTo(CX + R * sx, CY); ctx.stroke();
+    // the arc of angles
+    ctx.strokeStyle = Lab.css("--line"); ctx.lineWidth = 2; ctx.setLineDash([5, 5]);
+    ctx.beginPath(); ctx.arc(CX, CY, R * sx, Math.PI, Math.PI + Math.PI); ctx.stroke(); ctx.setLineDash([]);
+    // movable arm
+    ctx.strokeStyle = Lab.css("--coral"); ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(CX, CY); const p = tr(theta); ctx.lineTo(p.x, p.y); ctx.stroke();
+    // small ring
+    ctx.fillStyle = Lab.css("--coral");
+    ctx.beginPath(); ctx.arc(p.x, p.y, 9, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = Lab.css("--ink"); ctx.lineWidth = 2; ctx.stroke();
+    // degree labels
+    ctx.font = "800 13px " + Lab.css("--body"); ctx.textAlign = "center"; ctx.fillStyle = Lab.css("--ink-2");
+    [0, 30, 45, 60, 90, 135, 180].forEach((d) => {
+      const q = tr(d);
+      ctx.fillText(String(d) + "°", q.x, q.y - 8);
+    });
+    // degree text for movable arm (above ring)
+    ctx.fillStyle = Lab.css("--ink"); ctx.font = "800 15px " + Lab.css("--body");
+    ctx.fillText(theta.toFixed(0) + "°", p.x, p.y - 26);
+  }
+  // dragging the ring
+  cv.addEventListener("pointerdown", (e) => {
+    const { w, h } = Lab.fit(cv);
+    const CX = w / 2, CY = h / 2, sx = w / W, sy = h / H;
+    const dx = e.clientX - (cv.getBoundingClientRect().left + CX), dy = e.clientY - (cv.getBoundingClientRect().top + CY);
+    if (Math.hypot(dx / sx, dy / sy) > R - 12) {
+      cv.setPointerCapture(e.pointerId);
+      cv.addEventListener("pointermove", function onm(e) {
+        const r = cv.getBoundingClientRect();
+        const x = e.clientX - r.left - CX, y = e.clientY - r.top - CY;
+        const deg = Math.round((Math.atan2(-y, x) * 180 / Math.PI + 360) % 360);
+        setTheta(deg);
+      });
+    }
+  });
+  cv.addEventListener("pointerup", () => {});
+  cv.tabIndex = 0;
+  cv.addEventListener("keydown", (e) => {
+    if (["ArrowLeft", "ArrowUp", "ArrowRight", "ArrowDown", " ", "Enter"].includes(e.key)) {
+      const step = e.key === "ArrowLeft" ? -5 : e.key === "ArrowUp" ? 5 : e.key === "ArrowRight" ? 5 : e.key === "ArrowDown" ? -5 : 0;
+      setTheta(theta + step); e.preventDefault();
+    }
+  });
+  setTheta(60);
+})();
+</script>
+</body>
+</html>
