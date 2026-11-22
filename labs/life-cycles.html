@@ -35,6 +35,7 @@
         <div class="read"><span>Correct order?</span><b id="ok">Drag the stages.</b></div>
       </div>
     </div>
+    <div id="attempts"></div>
     <div class="box">
       <h2>Try it!</h2>
       <ul class="note" style="list-style:none;margin:6px 0 0;padding:0">
@@ -45,6 +46,11 @@
     </div>
   </div>
 </main>
+<div class="quiz" id="quiz" data-quiz-id="life-cycles"></div>
+<script src="../js/quiz.js"></script>
+<script src="../js/quiz-defs.js"></script>
+<script src="../js/attempts.js"></script>
+<script>Quiz.mount(document.getElementById("quiz")); Attempts.mount(document.getElementById("attempts"), "life-cycles");</script>
 <script src="lab.js"></script>
 <script>
 (function () {
@@ -68,6 +74,17 @@
         e.preventDefault();
         drag = { name: el.dataset.s, x: 0, y: 0 };
         cv.setPointerCapture(e.pointerId);
+      });
+      // Keyboard: fill the next open slot in order.
+      el.tabIndex = 0;
+      el.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        if (placed.some((p) => p.name === el.dataset.s)) return;
+        let idx = 0;
+        while (placed.some((p) => p.idx === idx)) idx++;
+        placed.push({ idx, name: el.dataset.s });
+        toolbox(); redraw();
       });
     });
     redraw();

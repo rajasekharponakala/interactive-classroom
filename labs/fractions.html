@@ -47,8 +47,14 @@
         <li>✔ Explain to a friend: how many 1/8 pieces do you need for 1/2?</li>
       </ul>
     </div>
+    <div id="attempts"></div>
   </div>
 </main>
+<div class="quiz" id="quiz" data-quiz-id="fractions"></div>
+<script src="../js/quiz.js"></script>
+<script src="../js/quiz-defs.js"></script>
+<script src="../js/attempts.js"></script>
+<script>Quiz.mount(document.getElementById("quiz")); Attempts.mount(document.getElementById("attempts"), "fractions");</script>
 <script src="lab.js"></script>
 <script>
 (function () {
@@ -59,7 +65,7 @@
     { name: "½ (8)", color: "#ff8e5f", value: 8 },
     { name: "¼ (4)", color: "#f6c86f", value: 4 },
     { name: "⅛ (2)", color: "#4d6ef6", value: 2 },
-    { name: "⅒ (1)", color: "#3bd05e", value: 1 },
+    { name: "1/16 (1)", color: "#3bd05e", value: 1 },
   ];
   let target = { n: 8, d: SEG };
   const TARGETS = [
@@ -88,6 +94,17 @@
       state.drag = { id: null, x: 0, v: p.value, w: 0 };
       document.body.addEventListener("pointermove", onMove);
       document.body.addEventListener("pointerup", onUp, { once: true });
+    });
+    // Keyboard: Enter/Space on a toolbox piece places it on the bar at the centre.
+    el.tabIndex = 0;
+    el.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      e.preventDefault();
+      state.drag = null;
+      const { width } = cv.getBoundingClientRect();
+      const unit = width / SEG;
+      state.pieces.push({ pos: Math.max(0, Math.min(width - unit, Math.floor((width / 2) / unit) * unit)), v: p.value });
+      redraw();
     });
   });
   function onMove(e) { state.drag.x = e.clientX; }

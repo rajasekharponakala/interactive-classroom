@@ -39,8 +39,14 @@
         <li>✔ Count: how many 90° angles fit in a full circle (360°)?</li>
       </ul>
     </div>
+    <div id="attempts"></div>
   </div>
 </main>
+<div class="quiz" id="quiz" data-quiz-id="protractor"></div>
+<script src="../js/quiz.js"></script>
+<script src="../js/quiz-defs.js"></script>
+<script src="../js/attempts.js"></script>
+<script>Quiz.mount(document.getElementById("quiz")); Attempts.mount(document.getElementById("attempts"), "protractor");</script>
 <script src="lab.js"></script>
 <script>
 (function () {

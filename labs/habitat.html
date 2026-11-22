@@ -30,6 +30,7 @@
         <div class="read"><span>Left for home</span><b id="wrong">–</b></div>
       </div>
     </div>
+    <div id="attempts"></div>
     <div class="box">
       <h2>Try it!</h2>
       <ul class="note" style="list-style:none;margin:6px 0 0;padding:0">
@@ -40,6 +41,11 @@
     </div>
   </div>
 </main>
+<div class="quiz" id="quiz" data-quiz-id="habitat"></div>
+<script src="../js/quiz.js"></script>
+<script src="../js/quiz-defs.js"></script>
+<script src="../js/attempts.js"></script>
+<script>Quiz.mount(document.getElementById("quiz")); Attempts.mount(document.getElementById("attempts"), "habitat");</script>
 <script src="lab.js"></script>
 <script>
 (function () {
@@ -60,6 +66,19 @@
         e.preventDefault();
         drag = { name: el.dataset.s, x: 0, y: 0 };
         cv.setPointerCapture(e.pointerId);
+      });
+      // Keyboard: Enter/Space places the animal in its home.
+      el.tabIndex = 0;
+      el.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        const a = ANIMALS.find((a) => a[0] === el.dataset.s);
+        if (!a) return;
+        if (placed.find((p) => p.name === a[0])) { redraw(); return; }
+        const home = ENVS.findIndex(([n]) => n.toLowerCase() === a[2]);
+        if (home < 0) return;
+        placed.push({ name: a[0], env: ENVS[home][0], emoji: a[1] });
+        redraw();
       });
     });
     redraw();

@@ -47,6 +47,7 @@
       </div>
       <p class="note" style="margin-top:8px">Energy swaps between height (potential) and movement (kinetic) on every swing.</p>
     </div>
+    <div id="attempts"></div>
     <div class="row" style="margin-top:10px"><button class="btn" id="reset" type="button">Reset to start</button></div>
   </div>
 </main>
@@ -139,5 +140,10 @@
   restart(); requestAnimationFrame(frame);
 })();
 </script>
+<div class="quiz" id="quiz" data-quiz-id="pendulum"></div>
+<script src="../js/quiz.js"></script>
+<script src="../js/quiz-defs.js"></script>
+<script src="../js/attempts.js"></script>
+<script>Quiz.mount(document.getElementById("quiz")); Attempts.mount(document.getElementById("attempts"), "pendulum");</script>
 </body>
 </html>

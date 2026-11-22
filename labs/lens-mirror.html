@@ -41,8 +41,14 @@
       </div>
       <p class="note" id="formula" style="margin-top:8px"></p>
     </div>
+    <div id="attempts"></div>
   </div>
 </main>
+<div class="quiz" id="quiz" data-quiz-id="lens-mirror"></div>
+<script src="../js/quiz.js"></script>
+<script src="../js/quiz-defs.js"></script>
+<script src="../js/attempts.js"></script>
+<script>Quiz.mount(document.getElementById("quiz")); Attempts.mount(document.getElementById("attempts"), "lens-mirror");</script>
 <script src="lab.js"></script>
 <script>
 (function () {

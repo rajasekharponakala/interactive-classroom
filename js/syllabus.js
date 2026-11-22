@@ -539,3 +539,32 @@ window.LABS = {
     blurb: "Drag the food onto the animal — plants, meat, fish or seeds?",
     tip: "Who eats grass? Who eats bugs? Drag the food to the animal and see!" },
 };
+
+// Science-history milestones that tie into the syllabus chapters. Clickable when they link to a sim:
+// our own labs open as "@id", PhET sims by slug. Keyed by year so a timeline of the discoveries exists.
+window.TIMELINE = [
+  { year: 1600, title: "The telescope and the microscope reach science",
+    note: "Glass lenses open the view of the sky and of the cell. Recording what you see — the oldest laboratory habit." },
+  { year: 1609, title: "Galileo's telescope: the Moon has mountains",
+    note: "Galileo's spyglass makes motion measurable: the Moon moves, Jupiter carries moons of its own, and nothing is still until it is measured. Our lens-mirror lab follows his rays.", sim: "@lens-mirror" },
+  { year: 1665, title: "Hooke publishes his observations of cork",
+    note: "Robert Hooke looks at cork through a microscope and names the smallest unit of life: the cell — the building block of the biology chapters." },
+  { year: 1687, title: "Newton's laws of motion and gravity",
+    note: "Newton publishes laws that describe how forces change motion. Explore one example of gravity at work in the pendulum lab.", sim: "@pendulum" },
+  { year: 1785, title: "Coulomb measures the electric force",
+    note: "Two charges attract or repel with a measurable 1/r² law — the circuits chapters follow this on paper and on screen.", sim: "coulombs-law" },
+  { year: 1820, title: "Oersted finds: current makes a magnet",
+    note: "Electricity and magnetism touch: a wire with a current moves a compass needle. The link is live in a room — electromagnetism begins.", sim: "magnets-and-electromagnets" },
+  { year: 1831, title: "Faraday discovers electromagnetic induction",
+    note: "Induction means a moving magnet can light a bulb — the basis of generators, motors and later labs in this syllabus.", sim: "faradays-law" },
+  { year: 1859, title: "Darwin publishes On the Origin of Species",
+    note: "Natural selection shapes species over time — predators and prey keep changing, like the animals in the habitat lab." },
+  { year: 1905, title: "Einstein's special relativity",
+    note: "The speed of light is the limit and mass and energy are the same thing: E = mc². The work-energy ideas in the work and energy chapters touch this." },
+  { year: 1913, title: "Bohr's model of the hydrogen atom",
+    note: "Electrons jump between energy levels in quanta — the structure of the atom chapter walks through it. Visit the model from the syllabus map.", sim: "models-of-the-hydrogen-atom" },
+  { year: 1930, title: "Quantum physics takes over",
+    note: "Particles behave like waves and the world is probability until you measure — the wave-on-a-string and wave-interference sims play with the same idea." },
+  { year: 1947, title: "Bell Labs demonstrates a working transistor",
+    note: "Transistors can amplify signals or act as switches. The circuit lab starts with simpler building blocks: wires, batteries and bulbs.", sim: "circuit-construction-kit-dc" },
+];

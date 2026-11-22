@@ -2,6 +2,7 @@
   "use strict";
   const SIMS = window.PHET_SIMS, BOARDS = window.BOARDS, SUBJECTS = window.SUBJECTS, LABS = window.LABS;
   const TIPS = window.SIM_TIPS, DOMAIN = window.SIM_DOMAIN, EXPS = window.SYLL_EXP || {};
+  const QUIZZ = window.LAB_QUIZZIES || {};
   const PHET = "https://phet.colorado.edu";
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -74,7 +75,7 @@
   function renderLabs() {
     $("labGrid").innerHTML = Object.entries(LABS).map(([id, L]) =>
       '<button type="button" class="lab-card" data-color="' + L.color + '" data-sim="@' + id + '"><span class="lab-art"><span class="made">Made here</span>' + ART[id] +
-      '</span><span class="lab-body"><h3>' + esc(L.t) + "</h3><p>" + esc(L.blurb) + '</p><span class="lab-go">Play →</span></span></button>').join("");
+      '</span><span class="lab-body"><h3>' + esc(L.t) + (QUIZZ[id] && QUIZZ[id].length ? '<span class="chip quiz-chip">📝 quiz</span>' : "") + "</h3><p>" + esc(L.blurb) + '</p><span class="lab-go">Play →</span></span></button>').join("");
   }
 
   // ---------- class + subject pickers ----------
@@ -111,7 +112,8 @@
     if (isOwn(id)) {
       const k = id.slice(1), L = LABS[k];
       return '<button type="button" class="sim own" data-color="' + L.color + '" data-sim="' + id + '" data-ctx="' + esc(ctx) + '"><span class="thumb"><span class="made">Made here</span>' + ART[k] +
-        '</span><span class="sim-body"><span class="sim-name">' + hl(L.t, q) + '</span><span class="sim-tags"><span class="tagc">' + L.domain + "</span></span></span></button>";
+        '</span><span class="sim-body"><span class="sim-name">' + hl(L.t, q) + '</span><span class="sim-tags"><span class="tagc">' + L.domain + "</span>" +
+        (QUIZZ[k] && QUIZZ[k].length ? '<span class="tagc">📝 quiz</span>' : "") + "</span></span></button>";
     }
     const S = SIMS[id];
     if (!S) return "";
@@ -153,7 +155,7 @@
   }
   document.addEventListener("click", (e) => {
     const b = e.target.closest("[data-sim]");
-    if (b) openSim(b.dataset.sim, b.dataset.ctx);
+    if (b && b.dataset.sim) openSim(b.dataset.sim, b.dataset.ctx);
   });
   let qTimer;
   $("q").addEventListener("input", (e) => { clearTimeout(qTimer); qTimer = setTimeout(() => { state.q = e.target.value; renderChapters(); renderHeat(); }, 120); });
@@ -217,6 +219,60 @@
     $("findingCards").innerHTML = cards.map((c) => '<article class="finding" style="--c:var(--' + c[0] + ')"><h3>' + c[1] + "</h3>" + c[2] + "</article>").join("");
   }
 
+  // ---------- progress (gamified overview) ----------
+  const num = (k) => { try { return JSON.parse(localStorage.getItem(k) || "0"); } catch (e) { return 0; } };
+  function progStats() {
+    const opens = num("ic-lab-open");
+    let labsOpened = 0;
+    if (opens && typeof opens === "object") labsOpened = Object.keys(LABS).filter((id) => opens[id]).length;
+    let quizPassed = 0, quizTries = 0;
+    for (const id of Object.keys(LABS)) {
+      const q = num("ic-quiz-" + id) || {};
+      if (QUIZZ[id] && QUIZZ[id].length && q.passed) quizPassed++;
+      quizTries += Number(q.attempts) || 0;
+    }
+    let minutes = 0;
+    for (const id of Object.keys(LABS)) for (const ms of (window.Attempts ? window.Attempts.history(id) : [])) minutes += ms / 60000;
+    return { labsOpened, quizPassed, quizTries, minutes: Math.round(minutes) };
+  }
+  function renderProgress() {
+    const d = progStats(), ps = $("progStats"), pb = $("progBadges"), pr = $("progReset");
+    if (!ps || !pb || !pr) return;
+    const badges = [
+      { icon: "🛠", label: "Lab Builder", ok: d.labsOpened >= 3 },
+      { icon: "🏆", label: "Quiz Champion", ok: d.quizPassed >= 3 },
+      { icon: "⏱", label: "Time Champion", ok: d.minutes >= 15 },
+      { icon: "📈", label: "Practice Helper", ok: d.quizTries >= 6 },
+    ].filter((b) => b.ok);
+    ps.innerHTML = [[d.labsOpened, "different labs opened"], [d.quizPassed, "quizzes passed"], [d.quizTries, "quizzes completed"], [d.minutes, "min in saved attempts"]]
+      .map((t) => '<div class="stat"><b>' + t[0] + "</b><span>" + t[1] + "</span></div>").join("");
+    pb.innerHTML = badges.length
+      ? badges.map((b) => '<span class="chip">' + b.icon + " " + esc(b.label) + "</span>").join("")
+      : '<span class="chip" style="opacity:.65">Play a lab or take a quiz to start earning badges</span>';
+    pr.onclick = () => {
+      if (!confirm("Clear all lab progress on this browser?")) return;
+      try {
+        localStorage.removeItem("ic-lab-open");
+        for (const id of Object.keys(LABS)) {
+          localStorage.removeItem("ic-quiz-" + id);
+          localStorage.removeItem("ic-attempts-" + id);
+        }
+      } catch (e) {}
+      renderProgress();
+    };
+  }
+
+  // ---------- timeline (science history) ----------
+  function renderTimeline() {
+    const tl = $("timelineList");
+    if (!tl) return;
+    tl.innerHTML = (window.TIMELINE || []).map((t) =>
+      '<li class="tline"><span class="when"><i aria-hidden="true"></i><b>' + esc(String(t.year)) + '</b></span><p class="tl-title">' + esc(t.title) +
+      '</p><p class="tl-note">' + esc(t.note) + '</p>' +
+      (t.sim && (isOwn(t.sim) ? LABS[t.sim.slice(1)] : SIMS[t.sim])
+        ? '<button type="button" class="btn" data-sim="' + esc(t.sim) + '">Try ' + esc(title(t.sim)) + '</button>' : '') + '</li>').join("");
+  }
+
   // ---------- player ----------
   const player = $("player"), frame = $("simFrame");
   let cur = null, lang = "en";
@@ -239,13 +295,20 @@
   }
   function openSim(id, ctx) {
     cur = id;
+    if (isOwn(id)) {
+      try {
+        const all = JSON.parse(localStorage.getItem("ic-lab-open") || "{}");
+        all[id.slice(1)] = (all[id.slice(1)] || 0) + 1;
+        localStorage.setItem("ic-lab-open", JSON.stringify(all));
+      } catch (e) {}
+    }
     const tipText = isOwn(id) ? LABS[id.slice(1)].tip : TIPS[id];
     $("pSub").textContent = ctx || (isOwn(id) ? "Made here · Interactive Classroom" : "");
     $("pTip").textContent = tipText ? "Try this: " + tipText : ""; $("pTip").hidden = !tipText;
     loadSim();
     player.showModal();
   }
-  player.addEventListener("close", () => { frame.src = "about:blank"; });
+  player.addEventListener("close", () => { frame.src = "about:blank"; renderProgress(); });
   player.addEventListener("click", (e) => { if (e.target === player) player.close(); });
   $("closeBtn").onclick = () => player.close();
   $("fsBtn").onclick = () => { document.fullscreenElement ? document.exitFullscreen() : $("stage").requestFullscreen && $("stage").requestFullscreen(); };
@@ -258,5 +321,7 @@
   function update() { writeHash(); renderHero(); renderPickers(); renderChapters(); renderHeat(); }
   readHash(); renderLabs(); renderFindings(); heroLab();
   renderHero(); renderPickers(); renderChapters(); renderHeat();
+  renderProgress(); renderTimeline();
+  addEventListener("storage", (e) => { if (!e.key || /^ic-(quiz-|attempts-|lab-open)/.test(e.key)) renderProgress(); });
   addEventListener("hashchange", () => { if (/^#board=/.test(location.hash)) { readHash(); renderHero(); renderPickers(); renderChapters(); renderHeat(); } });
 })();

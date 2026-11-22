@@ -6,6 +6,7 @@ body.embed .lab { padding-top: 4px; }
 body.mini .lab-head, body.mini .panel, body.mini .hint { display: none; }
 body.mini .lab { grid-template-columns: 1fr; padding: 0; }
 body.mini .stage { border: 0; border-radius: 0; background: transparent; }
+body.mini #quiz { display: none; }
 
 @media (max-width: 820px) {
   html, body { height: auto; }
@@ -54,3 +55,25 @@ table.log td { text-align: right; padding: 4px; border-top: 1px solid var(--line
   body:not(.mini) .panel { padding: 0 10px; }
   .lab-head h1 { font-size: 18px; }
 }
+
+/* ---- quiz panel (mounted by js/quiz.js on lab pages) ---- */
+#quiz { width: min(calc(100% - 24px), 660px); margin: 16px auto; flex-shrink: 0; }
+.quiz-title { font-size: 1.25rem; margin-bottom: 8px; }
+.quiz-question { font-weight: 800; }
+.quiz-bar { font-size: 13px; font-weight: 800; color: var(--ink-2); margin: 6px 0 10px; font-variant-numeric: tabular-nums; }
+.quiz-opts { display: grid; gap: 8px; margin: 0 0 6px; padding: 0; list-style: none; }
+.quiz-opt { display: block; width: 100%; padding: 12px 14px; border: 2px solid var(--line); border-radius: 12px; font-weight: 800; font-size: 15px; background: var(--card); cursor: pointer; transition: transform .15s, border-color .15s, background .15s, box-shadow .15s; text-align: left; }
+.quiz-opt:hover { transform: translateY(-2px); border-color: var(--ink); }
+.quiz-opt:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.quiz-opt.ok { background: var(--leaf-soft); border-color: var(--leaf); }
+.quiz-opt.hit { box-shadow: 0 0 0 3px var(--sun); animation: quiz-pulse .55s ease; }
+@keyframes quiz-pulse { 0% { box-shadow: 0 0 0 8px rgba(255, 183, 77, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 183, 77, 0); } }
+.quiz-feedback { font-size: 15px; font-weight: 800; margin: 8px 0 4px; }
+.quiz-why { font-size: 13px; color: var(--ink-2); line-height: 1.45; margin: 0 0 8px; font-weight: 700; }
+.quiz-summary { text-align: center; padding: 4px 0 2px; }
+.quiz-wins { font-size: 20px; margin: 0; }
+.quiz-note { font-size: 14px; color: var(--ink-2); margin: 8px 0 0; }
+.quiz-again { margin-top: 14px; }
+
+/* ---- timer & history (mounted by js/attempts.js on lab pages) ---- */
+.tHist { margin: 10px 0 0; font-size: 12px; color: var(--ink-2); font-weight: 700; }

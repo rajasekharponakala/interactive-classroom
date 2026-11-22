@@ -46,8 +46,14 @@ svg text { font-family: var(--body); font-weight: 900; fill: var(--ink); }
       <p class="note" id="extNote" style="margin-top:6px" hidden></p>
     </div>
     <div class="row"><button class="btn" id="reset" type="button">Reset</button></div>
+    <div id="attempts"></div>
   </div>
 </main>
+<div class="quiz" id="quiz" data-quiz-id="triangle"></div>
+<script src="../js/quiz.js"></script>
+<script src="../js/quiz-defs.js"></script>
+<script src="../js/attempts.js"></script>
+<script>Quiz.mount(document.getElementById("quiz")); Attempts.mount(document.getElementById("attempts"), "triangle");</script>
 <script src="lab.js"></script>
 <script>
 (function () {

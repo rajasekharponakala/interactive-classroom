@@ -29,6 +29,7 @@
         <div class="read"><span>Animals fed</span><b id="fed">0 of 10</b></div>
       </div>
     </div>
+    <div id="attempts"></div>
     <div class="box">
       <h2>Try it!</h2>
       <ul class="note" style="list-style:none;margin:6px 0 0;padding:0">
@@ -39,6 +40,11 @@
     </div>
   </div>
 </main>
+<div class="quiz" id="quiz" data-quiz-id="animal-food"></div>
+<script src="../js/quiz.js"></script>
+<script src="../js/quiz-defs.js"></script>
+<script src="../js/attempts.js"></script>
+<script>Quiz.mount(document.getElementById("quiz")); Attempts.mount(document.getElementById("attempts"), "animal-food");</script>
 <script src="lab.js"></script>
 <script>
 (function () {
@@ -63,6 +69,23 @@
     $("toolbox").innerHTML = FOODS.map((f) => '<div class="piece-thumb" data-s="' + f[0] + '">' + f[1] + " " + f[0] + "</div>").join("");
     $("toolbox").querySelectorAll(".piece-thumb").forEach((el) => {
       el.addEventListener("pointerdown", (e) => { e.preventDefault(); drag = { name: el.dataset.s, x: 0, y: 0 }; cv.setPointerCapture(e.pointerId); });
+      // Keyboard: Enter/Space feeds the nearest animal of this food.
+      el.tabIndex = 0;
+      el.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        const f = FOODS.find((f) => f[0] === el.dataset.s);
+        const { w, h } = Lab.fit(cv);
+        const y = ENV_Y(h) + 12;
+        let best = -1;
+        ANIMAL_X.forEach((p, i) => {
+          if (ANIMALS[i][2] !== f[2] || fed.some((a) => a.name === ANIMALS[i][0])) return;
+          if (best < 0 || Math.hypot(p[0] - w / 2, p[1] - y) < Math.hypot(ANIMAL_X[best][0] - w / 2, ANIMAL_X[best][1] - y)) best = i;
+        });
+        const a = best < 0 ? null : ANIMALS[best];
+        if (a && !fed.find((g) => g.name === a[0])) fed.push({ name: a[0] });
+        redraw();
+      });
     });
     redraw();
   }

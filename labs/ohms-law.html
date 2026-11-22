@@ -112,8 +112,14 @@
       </svg>
       <p class="note" style="margin-top:6px">The points should form a straight line from (0,0). Try predicting where another point would land.</p>
     </div>
+    <div id="attempts"></div>
   </div>
 </main>
+<div class="quiz" id="quiz" data-quiz-id="ohms-law"></div>
+<script src="../js/quiz.js"></script>
+<script src="../js/quiz-defs.js"></script>
+<script src="../js/attempts.js"></script>
+<script>Quiz.mount(document.getElementById("quiz")); Attempts.mount(document.getElementById("attempts"), "ohms-law");</script>
 <script src="lab.js"></script>
 <script>
 (function () {
