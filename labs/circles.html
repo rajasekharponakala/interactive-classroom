@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Circle Theorems Lab</title>
+<link rel="stylesheet" href="../css/base.css">
+<link rel="stylesheet" href="../css/lab.css">
+<link rel="stylesheet" href="scene.css">
+<style>
+:root { --accent: var(--violet); --accent-soft: var(--violet-soft); }
+.circle-page { height: auto; display: block; }
+.circle-page #sceneLab { width: 100%; }
+.circle-page svg { cursor: default; touch-action: auto; }
+.circle-page svg text { font: 800 18px system-ui, sans-serif; fill: var(--ink); paint-order: stroke; stroke: var(--sky-soft); stroke-width: 4px; }
+.circle-page output { font-weight: 800; }
+.circle-page #quiz { padding: 14px; }
+</style>
+</head>
+<body class="circle-page">
+<main id="sceneLab">
+  <h1 class="scene-title">Circle Theorems Lab</h1>
+  <div class="scene-grid">
+    <section class="scene-view" aria-label="Circle diagram">
+      <svg id="diagram" viewBox="0 0 440 340" role="img" aria-labelledby="diagramTitle"><title id="diagramTitle">Circle diagram</title><g id="marks"></g></svg>
+    </section>
+    <section class="scene-panel" aria-label="Investigation">
+      <h2>Explore</h2>
+      <label for="mode">What are you investigating?</label>
+      <select id="mode"><option value="arc">Angles on the same arc</option><option value="tangent">Tangents from one point</option></select>
+      <div id="arcControls">
+        <label for="arc">Minor arc AB <output id="arcValue" for="arc"></output></label>
+        <input id="arc" type="range" min="30" max="180" step="2" value="90">
+        <label for="position">Move C along the opposite arc</label>
+        <input id="position" type="range" min="0" max="100" value="50">
+        <p>Predict: If you move C but keep A and B fixed, what changes?</p>
+      </div>
+      <div id="tangentControls" hidden>
+        <label for="distance">Distance OP <output id="distanceValue" for="distance"></output></label>
+        <input id="distance" type="range" min="2.4" max="5" step="0.1" value="3.5">
+        <p>P is outside the circle. The green radii meet the purple tangents at right angles. The dashed secant crosses the circle at N (near) and F (far). Predict: how does PN × PF compare with PA² as you move P?</p>
+      </div>
+      <p class="read" id="measurements"></p>
+      <button class="btn" type="button" id="resetCircle">Reset model</button>
+      <div id="attempts"></div>
+    </section>
+  </div>
+  <section id="quiz" data-quiz-id="circles"></section>
+</main>
+<script src="lab.js"></script><script src="circles.js"></script>
+<script src="../js/quiz-defs.js"></script><script src="../js/quiz.js"></script><script src="../js/attempts.js"></script>
+<script>Quiz.mount(document.getElementById('quiz')); Attempts.mount(document.getElementById('attempts'), 'circles');</script>
+</body>
+</html>

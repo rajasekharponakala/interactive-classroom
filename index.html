@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Interactive Classroom – play with every chapter</title>
-<meta name="description" content="Science and maths for classes 6–10 (Telangana and Andhra Pradesh). Every chapter has a simulation you can play, plus hands-on experiments for the rest. Try now!">
+<meta name="description" content="Explore science and maths for classes 6–10 in Telangana and Andhra Pradesh with interactive labs, 3D models and classroom activities.">
 <meta name="color-scheme" content="light dark">
 <script>try { var t = localStorage.getItem("ic-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,7 +35,7 @@
     <div class="hero-text">
       <p class="sticker">Classes 6–10 · Science and Maths</p>
       <h1>Don't just read the chapter. <span class="hl">Play with it, explore it, try it!</span></h1>
-      <p class="lede">Simulations and labs for every chapter of the <b id="heroBoard"></b> syllabus — pull, slide, drag, count, watch, and see what happens. For classes 6–10, in English and Telugu.</p>
+      <p class="lede">Explore the <b id="heroBoard"></b> syllabus with simulations and classroom activities. Some PhET simulations are available in Telugu.</p>
       <div class="hero-cta">
         <a class="btn primary" href="#explore">Find my chapter</a>
         <a class="btn" href="#labs">See our labs &amp; experiments</a>
@@ -74,6 +74,7 @@
       <h2 id="labsH">Our own labs</h2>
       <p>Explore pendulums, lenses, circuits, geometry, fractions, animal life cycles and more. Look for the quiz badge to check your understanding after you play.</p>
     </div>
+    <div class="pill-group lab-filters" id="labFilters" role="group" aria-label="Filter our labs"></div>
     <div class="lab-grid" id="labGrid"></div>
   </section>
 
@@ -109,7 +110,7 @@
 
 <footer class="footer">
   <div class="wrap">
-    <p><b>Simulations.</b> Labs marked “Made here” are original to this site. All others are by <a href="https://phet.colorado.edu/" target="_blank" rel="noopener">PhET Interactive Simulations</a>, University of Colorado Boulder, and run from PhET's own website inside this page; nothing of theirs is copied or re-hosted. See <a href="https://phet.colorado.edu/en/licensing" target="_blank" rel="noopener">PhET licensing</a> before any commercial use.</p>
+    <p><b>Simulations.</b> The labs under “Our own labs” are original to this site. Cards marked PhET run from <a href="https://phet.colorado.edu/" target="_blank" rel="noopener">PhET Interactive Simulations</a>, University of Colorado Boulder. See <a href="https://phet.colorado.edu/en/licensing" target="_blank" rel="noopener">PhET licensing</a> before any commercial use.</p>
     <p><b>Syllabus.</b> Chapter lists follow the SCERT Telangana textbooks, the SCERT Andhra Pradesh textbooks for classes 6–7 and the NCERT textbooks Andhra Pradesh uses for classes 8–10. Check chapter names against the current edition. This is an independent teaching aid, not affiliated with PhET, SCERT or either state board.</p>
   </div>
 </footer>
@@ -133,7 +134,7 @@
 
 <script src="js/sims.js"></script>
 <script src="js/syllabus.js"></script>
-<script src="js/experiments.js"></script>
+<script src="js/classroom-activities.js"></script>
 <script src="js/quiz-defs.js"></script>
 <script src="js/attempts.js"></script>
 <script src="js/app.js"></script>

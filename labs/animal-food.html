@@ -25,17 +25,16 @@
     <div class="box">
       <h2>Drag food to animals</h2>
       <div id="toolbox" style="margin-top:8px"></div>
+      <div id="choices"></div>
       <div class="reads" style="margin-top:10px">
-        <div class="read"><span>Animals fed</span><b id="fed">0 of 10</b></div>
+        <div class="read"><span>Animals fed</span><b id="fed">0 of 4</b></div>
       </div>
     </div>
     <div id="attempts"></div>
     <div class="box">
       <h2>Try it!</h2>
       <ul class="note" style="list-style:none;margin:6px 0 0;padding:0">
-        <li>✔ Rabbit: which food do they eat — plants?</li>
-        <li>✔ Hawk or owl: meat?</li>
-        <li>✔ Spider: bugs!</li>
+        <li>Choose an example food and an animal, or drag the food onto the animal. Real diets can include more foods than the ones shown.</li>
       </ul>
     </div>
   </div>
@@ -46,81 +45,61 @@
 <script src="../js/attempts.js"></script>
 <script>Quiz.mount(document.getElementById("quiz")); Attempts.mount(document.getElementById("attempts"), "animal-food");</script>
 <script src="lab.js"></script>
+<script src="choices.js"></script>
 <script>
 (function () {
   const cv = document.getElementById("cv"), $ = (i) => document.getElementById(i);
   // Animals: [name, emoji, allowed food key]
-  const ANIMALS = [
-    ["Rabbit", "🐇", "plants"], ["Deer", "🦌", "plants"], ["Cow", "🐮", "plants"], ["Bamboo", "🎋", "plants"],
-    ["Caterpillar", "🐛", "plants"], ["Beetle", "🪲", "seeds"], ["Snake", "🐍", "meat"], ["Vulture", "🕊", "meat"],
-    ["Fish", "🐟", "fish"], ["Owl", "🦉", "bugs"],
-  ];
+  const ANIMALS = [["Cow", "🐮", "grass"], ["Barn owl", "🦉", "mouse"],
+    ["Sparrow", "🐦", "seeds"], ["Garden spider", "🕷️", "insects"]];
   // Food: [name, emoji, key]
-  const FOODS = [
-    ["Plants", "🌿", "plants"], ["Hay", "🌾", "plants"], ["Leaves", "🍃", "leaves"], ["Vegetables", "🍆", "plants"],
-    ["Grass", "🌱", "plants"], ["Seeds", "🌱", "seeds"], ["Leaf", "🍂", "leaves"], ["Bugs", "🐛", "bugs"],
-    ["Meat", "🥩", "meat"], ["Fish", "🐟", "fish"],
-  ];
+  const FOODS = [["Grass", "🌱", "grass"], ["Mouse", "🐁", "mouse"],
+    ["Seeds", "🌾", "seeds"], ["Insects", "🪰", "insects"]];
   let drag = null, fed = [];
   const hitAnimal = (x, y) => ANIMALS.find((a, i) => Math.hypot(x - ANIMAL_X[i][0], y - ANIMAL_X[i][1]) < 30);
-  const ENV_Y = h => h * 0.15;
   let ANIMAL_X = [];
   function toolbox() {
     $("toolbox").innerHTML = FOODS.map((f) => '<div class="piece-thumb" data-s="' + f[0] + '">' + f[1] + " " + f[0] + "</div>").join("");
     $("toolbox").querySelectorAll(".piece-thumb").forEach((el) => {
-      el.addEventListener("pointerdown", (e) => { e.preventDefault(); drag = { name: el.dataset.s, x: 0, y: 0 }; cv.setPointerCapture(e.pointerId); });
-      // Keyboard: Enter/Space feeds the nearest animal of this food.
-      el.tabIndex = 0;
-      el.addEventListener("keydown", (e) => {
-        if (e.key !== "Enter" && e.key !== " ") return;
-        e.preventDefault();
-        const f = FOODS.find((f) => f[0] === el.dataset.s);
-        const { w, h } = Lab.fit(cv);
-        const y = ENV_Y(h) + 12;
-        let best = -1;
-        ANIMAL_X.forEach((p, i) => {
-          if (ANIMALS[i][2] !== f[2] || fed.some((a) => a.name === ANIMALS[i][0])) return;
-          if (best < 0 || Math.hypot(p[0] - w / 2, p[1] - y) < Math.hypot(ANIMAL_X[best][0] - w / 2, ANIMAL_X[best][1] - y)) best = i;
-        });
-        const a = best < 0 ? null : ANIMALS[best];
-        if (a && !fed.find((g) => g.name === a[0])) fed.push({ name: a[0] });
-        redraw();
-      });
+      el.addEventListener("pointerdown", (e) => { e.preventDefault(); drag = { name: el.dataset.s, emoji:FOODS.find(f => f[0] === el.dataset.s)[1], x:0, y:0 }; cv.setPointerCapture(e.pointerId); });
     });
     redraw();
   }
   function redraw() {
     const { ctx, w, h } = Lab.fit(cv);
     ctx.clearRect(0, 0, w, h);
+    ANIMAL_X = ANIMALS.map((_,i) => [w*(i%2 ? .75 : .25), h*(i<2 ? .34 : .70)]);
     ANIMALS.forEach((a, i) => {
-      const x = 40 + i * (w - 80) / 9, y = ENV_Y(h) + 12;
+      const [x,y] = ANIMAL_X[i];
       ctx.font = "800 28px"; ctx.textAlign = "center"; ctx.fillStyle = Lab.css("--ink"); ctx.fillText(a[1], x, y + 2);
-      ctx.font = "800 15px " + Lab.css("--body"); ctx.fillText(a[0], x, y + 18);
+      ctx.font = "800 15px " + Lab.css("--body"); ctx.fillText(a[0], x, y + 42);
       ctx.beginPath(); ctx.arc(x, y, 22, 0, 7); ctx.stroke();
       // check food marker: " Fed!" if fed
       if (fed.find((f) => f.name === a[0])) { ctx.fillStyle = Lab.css("--leaf"); ctx.fillText("✅", x, y - 2); }
     });
     if (drag && Math.hypot(drag.x, drag.y) > 6) {
       ctx.font = "800 18px"; ctx.fillStyle = Lab.css("--ink"); ctx.textAlign = "center";
-      const a = ANIMALS.find((a) => a[0] === drag.name); ctx.fillText(drag.emoji, drag.x, drag.y - 18);
+      ctx.fillText(drag.emoji, drag.x, drag.y - 18);
     }
     $("fed").textContent = fed.length + " of " + ANIMALS.length;
   }
   cv.addEventListener("pointermove", (e) => { if (!drag) return; const r = cv.getBoundingClientRect(); drag.x = e.clientX - r.left, drag.y = e.clientY - r.top; redraw(); });
   cv.addEventListener("pointerup", (e) => {
     if (!drag) return; cv.releasePointerCapture(e.pointerId);
-    const a = hitAnimal(drag.x, drag.y);
-    const f = FOODS.find((f) => f[0] === drag.name);
-    if (a && f && f[2] === a[2] && !fed.find((g) => g.name === a[0])) fed.push({ name: a[0] });
+    const r = cv.getBoundingClientRect(), a = hitAnimal(e.clientX-r.left,e.clientY-r.top);
+    if (a) announce(place(drag.name,a[0]));
     drag = null; redraw();
   });
-  // compute animal positions
-  Lab.fit(cv);
-  setTimeout(() => {
-    const { w, h } = Lab.fit(cv);
-    ANIMAL_X = ANIMALS.map((a, i) => [40 + i * (w - 80) / 9, ENV_Y(h) + 12]);
-    toolbox();
-  }, 30);
+  cv.addEventListener("pointercancel", () => { drag = null; redraw(); });
+  function place(food,name) {
+    if (fed.some(p => p.name === name)) return name + " is already matched.";
+    if (FOODS.find(f => f[0] === food)[2] !== ANIMALS.find(a => a[0] === name)[2]) return "Not quite. Try another example food for " + name + ".";
+    fed.push({name}); redraw();
+    return fed.length === ANIMALS.length ? "All four animals matched!" : name + " matched to " + food.toLowerCase() + ".";
+  }
+  const announce = LabChoices($("choices"), {sourceLabel:"Food", sources:FOODS.map(([n]) => [n,n]), targetLabel:"Animal", targets:ANIMALS.map(([n]) => [n,n]), place,
+    reset:() => { fed = []; redraw(); }, undo:() => { const p = fed.pop(); redraw(); return p ? "Removed the match for " + p.name + "." : "Nothing to undo."; }});
+  toolbox(); new ResizeObserver(redraw).observe(cv);
 })();
 </script>
 </body>

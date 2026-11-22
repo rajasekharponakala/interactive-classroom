@@ -1,7 +1,7 @@
 (function () {
   "use strict";
   const SIMS = window.PHET_SIMS, BOARDS = window.BOARDS, SUBJECTS = window.SUBJECTS, LABS = window.LABS;
-  const TIPS = window.SIM_TIPS, DOMAIN = window.SIM_DOMAIN, EXPS = window.SYLL_EXP || {};
+  const TIPS = window.SIM_TIPS, DOMAIN = window.SIM_DOMAIN, ACTIVITIES = window.CLASSROOM_ACTIVITIES || {};
   const QUIZZ = window.LAB_QUIZZIES || {};
   const PHET = "https://phet.colorado.edu";
   const $ = (id) => document.getElementById(id);
@@ -15,11 +15,16 @@
   // Kid-friendly emoji per domain, shown as colour-free badges.
   const EMOJI = { Physics: "⚡", Chemistry: "🧪", Biology: "🌿", Maths: "📐", "Earth science": "🌍" };
   const DOT = ["🌕", "🌗", "🌖", "🌒", "🌓", "🌔"]; // for gaps list circles, unused now
-  const gapExp = (b, c, s, i) => EXPS[b + "." + c + "." + s + "." + i] || [];
   const micro = (q, t) => (q ? "<mark>" + esc(t.slice(t.toLowerCase().indexOf(q), t.toLowerCase().indexOf(q) + q.length)) + "</mark>" : esc(t));
 
   // Small drawings for our own labs.
   const ART = {
+    constructions: '<svg viewBox="0 0 120 72" aria-hidden="true"><circle cx="43" cy="36" r="25" fill="none" stroke="var(--violet)" stroke-width="3" stroke-dasharray="4 4"/><circle cx="77" cy="36" r="25" fill="none" stroke="var(--teal)" stroke-width="3" stroke-dasharray="4 4"/><path d="M43 36h34 M60 10v52 m-8-26v-8h8" fill="none" stroke="var(--ink)" stroke-width="3"/></svg>',
+    circles: '<svg viewBox="0 0 120 72" aria-hidden="true"><circle cx="60" cy="36" r="26" fill="var(--violet-soft)" stroke="var(--ink)" stroke-width="3"/><path d="M39 19 60 62 81 19 M39 19 60 36 81 19" fill="none" stroke="var(--violet)" stroke-width="4"/><circle cx="60" cy="36" r="4" fill="var(--ink)"/></svg>',
+    cell: '<svg viewBox="0 0 120 72" aria-hidden="true"><rect x="21" y="11" width="78" height="50" rx="14" fill="var(--leaf-soft)" stroke="var(--ink)" stroke-width="3"/><ellipse cx="62" cy="36" rx="21" ry="16" fill="var(--sky)"/><circle cx="40" cy="26" r="7" fill="var(--violet)"/><ellipse cx="85" cy="26" rx="8" ry="5" fill="var(--leaf)"/><ellipse cx="42" cy="48" rx="8" ry="5" fill="var(--leaf)"/></svg>',
+    "solids": '<svg viewBox="0 0 120 72" aria-hidden="true"><path d="M30 25 62 10 91 25 91 53 62 67 30 52Z M30 25 62 39 91 25 M62 39v28" fill="var(--teal)" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/></svg>',
+    "pyramid": '<svg viewBox="0 0 120 72" aria-hidden="true"><path d="M61 8 20 49 54 65 101 51Z M61 8 54 65" fill="var(--coral)" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/></svg>',
+    "solar-system": '<svg viewBox="0 0 120 72" aria-hidden="true"><ellipse cx="60" cy="36" rx="47" ry="18" transform="rotate(-18 60 36)" fill="none" stroke="var(--ink)" stroke-width="3"/><circle cx="60" cy="36" r="11" fill="var(--sun)"/><circle cx="95" cy="19" r="7" fill="var(--sky)" stroke="var(--ink)" stroke-width="2"/></svg>',
     "ohms-law": '<svg viewBox="0 0 120 72" aria-hidden="true"><rect x="14" y="14" width="92" height="44" rx="10" fill="none" stroke="var(--ink)" stroke-width="4"/><rect x="42" y="5" width="36" height="18" rx="6" fill="var(--sun)" stroke="var(--ink)" stroke-width="3"/><path d="M48 14l4-5 5 10 5-10 5 10 5-10" fill="none" stroke="var(--ink)" stroke-width="2.5" stroke-linejoin="round"/><circle cx="106" cy="36" r="11" fill="var(--sun)" stroke="var(--ink)" stroke-width="3"/><rect x="5" y="24" width="18" height="24" rx="5" fill="var(--teal)" stroke="var(--ink)" stroke-width="3"/><circle cx="60" cy="58" r="4" fill="var(--sky)"/><circle cx="36" cy="58" r="4" fill="var(--sky)"/><circle cx="84" cy="58" r="4" fill="var(--sky)"/></svg>',
     "lens-mirror": '<svg viewBox="0 0 120 72" aria-hidden="true"><path d="M4 40h112" stroke="var(--ink-3)" stroke-width="2"/><path d="M60 8q14 32 0 60q-14-28 0-60z" fill="var(--teal-soft)" stroke="var(--ink)" stroke-width="3.5" stroke-linejoin="round"/><path d="M20 20H60L104 58M20 20L104 58" fill="none" stroke="var(--coral)" stroke-width="3" stroke-linecap="round"/><path d="M20 40V20m-6 7 6-8 6 8" fill="none" stroke="var(--ink)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M104 40v18m-5-6 5 7 5-7" fill="none" stroke="var(--leaf)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     "pendulum": '<svg viewBox="0 0 120 72" aria-hidden="true"><rect x="36" y="4" width="48" height="7" rx="3.5" fill="var(--ink)"/><path d="M60 10 34 52" stroke="var(--ink)" stroke-width="3"/><path d="M60 10v46M60 10l26 42" stroke="var(--ink-3)" stroke-width="2" stroke-dasharray="4 5"/><circle cx="32" cy="55" r="12" fill="var(--coral)" stroke="var(--ink)" stroke-width="3.5"/></svg>',
@@ -72,9 +77,14 @@
   function heroLab() { $("heroLab").src = "labs/pendulum.html?mini=1&theme=" + theme(); }
 
   // ---------- own labs ----------
-  function renderLabs() {
-    $("labGrid").innerHTML = Object.entries(LABS).map(([id, L]) =>
-      '<button type="button" class="lab-card" data-color="' + L.color + '" data-sim="@' + id + '"><span class="lab-art"><span class="made">Made here</span>' + ART[id] +
+  function renderLabs(filter = "all") {
+    const filters = [["all", "All labs"], ["3d", "3D challenges"], ["2d", "2D labs"]];
+    pills("labFilters", filters, filter, (value) => {
+      renderLabs(value);
+      $("labFilters").querySelector('[aria-pressed="true"]').focus();
+    });
+    $("labGrid").innerHTML = Object.entries(LABS).filter(([, lab]) => filter === "all" || Boolean(lab.spatial) === (filter === "3d")).map(([id, L]) =>
+      '<button type="button" class="lab-card" data-color="' + L.color + '" data-sim="@' + id + '"><span class="lab-art"><span class="made">' + (L.spatial ? '3D · Challenge' : 'Made here') + '</span>' + ART[id] +
       '</span><span class="lab-body"><h3>' + esc(L.t) + (QUIZZ[id] && QUIZZ[id].length ? '<span class="chip quiz-chip">📝 quiz</span>' : "") + "</h3><p>" + esc(L.blurb) + '</p><span class="lab-go">Play →</span></span></button>').join("");
   }
 
@@ -113,7 +123,7 @@
       const k = id.slice(1), L = LABS[k];
       return '<button type="button" class="sim own" data-color="' + L.color + '" data-sim="' + id + '" data-ctx="' + esc(ctx) + '"><span class="thumb"><span class="made">Made here</span>' + ART[k] +
         '</span><span class="sim-body"><span class="sim-name">' + hl(L.t, q) + '</span><span class="sim-tags"><span class="tagc">' + L.domain + "</span>" +
-        (QUIZZ[k] && QUIZZ[k].length ? '<span class="tagc">📝 quiz</span>' : "") + "</span></span></button>";
+        (L.spatial ? '<span class="tagc">3D · Challenge</span>' : '') + (QUIZZ[k] && QUIZZ[k].length ? '<span class="tagc">📝 quiz</span>' : "") + "</span></span></button>";
     }
     const S = SIMS[id];
     if (!S) return "";
@@ -121,11 +131,12 @@
       PHET + "/sims/html/" + id + "/latest/" + id + '-600.png" onerror="this.remove()"></span><span class="sim-body"><span class="sim-name">' + hl(S.t, q) +
       '</span><span class="sim-tags"><span class="tagc">' + (EMOJI[DOMAIN[id] || "Maths"] || "") + " " + (DOMAIN[id] || "Maths") + '</span><span class="tagc">PhET</span>' + (S.te ? '<span class="tagc">తెలుగు</span>' : "") + "</span></span></button>";
   }
-  function gapExpItem(b, x) {
-    const list = gapExp(b, x.cls, x.s, x.i);
-    const items = list.length ? list.map((e) =>
-      '<span class="gap-exp"><span class="gap-dot">➜</span><span><strong>' + esc(e[0]) + "</strong><em>" + esc(e[1]) + "</em></span></span>").join("") :
-      '<span class="gap-exp"><span class="gap-dot">📝</span><span><em>Try a mini model, a field note or a video: plan one activity for this chapter.</em></span></span>';
+  function activityItems(x) {
+    return (Object.hasOwn(ACTIVITIES,x.c[0]) ? ACTIVITIES[x.c[0]] : []).map((e) =>
+      '<span class="gap-exp"><span class="gap-dot" aria-hidden="true">➜</span><span><strong>' + esc(e.title) + '</strong> · ' + esc(e.kind) + '<em>' + esc(e.prompt) + "</em></span></span>").join("");
+  }
+  function gapExpItem(x) {
+    const items = activityItems(x) || '<span class="gap-exp"><span class="gap-dot" aria-hidden="true">📝</span><span>No vetted activity yet. Ask your teacher for a textbook activity.</span></span>';
     return '<li><span class="gap-head"><i>' + (x.i + 1) + "</i>" + esc(x.c[0]) + "</span>" +
       '<span class="exp-list">' + items + "</span></li>";
   }
@@ -143,12 +154,13 @@
     const withSims = items.filter((x) => x.c[1]), gaps = items.filter((x) => !x.c[1]);
     $("chapters").innerHTML = withSims.length ? withSims.map((x, k) => {
       const ctx = "Class " + x.cls + " · " + SUBJECTS[x.s].name + " · " + x.c[0];
+      const activity = activityItems(x);
       return '<li class="chapter" data-subj="' + x.s + '" style="--i:' + Math.min(k, 10) + '"><div class="ch-head"><span class="num" aria-hidden="true">' + (x.i + 1) + "</span><div>" +
         (q ? '<p class="where">Class ' + x.cls + " · " + esc(SUBJECTS[x.s].name) + "</p>" : "") + "<h3>" + esc(x.c[0]) + '</h3></div></div><div class="sims">' +
-        simsOf(x.c).map((s) => simTile(s, ctx, q)).join("") + "</div></li>";
+        simsOf(x.c).map((s) => simTile(s, ctx, q)).join("") + '</div>' + (activity ? '<details class="chapter-activity"><summary>Try an offline activity</summary><div class="exp-list">' + activity + '</div></details>' : '') + '</li>';
     }).join("") : '<li class="empty" role="status">' + (q ? "Nothing matches that search. Try a shorter word like “magnet”, “circuit”, “fractions”…" : "No simulations for these chapters yet.") + "</li>";
-    $("gaps").innerHTML = gaps.length ? '<h3>' + gaps.length + " more chapter(s) — you can try a hands-on experiment for each</h3>" +
-      "<ul class=\"gap-list\">" + gaps.map((x) => gapExpItem(state.board, x)).join("") + "</ul>" : "";
+    $("gaps").innerHTML = gaps.length ? '<h3>' + gaps.length + ' without a mapped simulation</h3><p>Optional classroom activities are shown where available. They do not replace textbook practicals.</p>' +
+      "<ul class=\"gap-list\">" + gaps.map(gapExpItem).join("") + "</ul>" : "";
     if (!withSims.length && !gaps.length && q) $("chapters").innerHTML = '<li class="empty" role="status">No chapters match “' + esc(q) + '”. Try a shorter word.</li>';
     if (!gaps.length && !q) $("gaps").innerHTML = '<h3 style="display:none"></h3>';
     if (!gaps.length && q) $("gaps").innerHTML = "";
@@ -211,9 +223,9 @@
     const cards = [
       ["sky", "Physical science fits best", "<p>For classes 8–10, " + both(["phy"]) + " of physical science chapters have a simulation.</p><p>Light, electricity, magnetism, atoms, acids and bases, and motion are well served. Metallurgy, fuels and materials are the usual gaps.</p>"],
       ["leaf", "Biology is the weak spot", "<p>Only " + both(["bio"]) + " of biology chapters have a simulation, because few life-science simulations exist.</p><p>Plan specimens, models, field work and videos for life processes, reproduction, tissues and ecosystems.</p>"],
-      ["violet", "Maths: strong on number, thin on geometry", "<p>" + both(["math"]) + " of maths chapters have a simulation.</p><p>Fractions, integers, ratio, equations, graphs, statistics and trigonometry are covered. Constructions, mensuration and circles are not yet — our Triangle Angles Lab is a first step.</p>"],
+      ["violet", "Maths: number and geometry", "<p>" + both(["math"]) + " of maths chapters have a simulation.</p><p>Try measuring boxes, folding a cube net, and comparing top and front views. Circle theorems and many geometric constructions still need dedicated activities.</p>"],
       ["coral", "Both boards get similar value", "<p>Overall, <b>" + pct(ts.covered, ts.total) + "%</b> of Telangana chapters (" + ts.covered + " of " + ts.total + ") and <b>" + pct(ap.covered, ap.total) + "%</b> of Andhra Pradesh chapters (" + ap.covered + " of " + ap.total + ") have a simulation.</p><p>The same simulations serve both; mostly the chapter order and class differ.</p>"],
-      ["teal", "Telugu-medium classes", "<p>Every PhET simulation used here has a Telugu version you can switch to in the player. Translations are volunteer-made, so preview the wording first.</p><p>Our own labs are in English for now.</p>"],
+      ["teal", "Telugu-medium classes", "<p>When a Telugu edition is available, the PhET player shows a language switch. Preview the wording before class.</p><p>Our own labs are in English for now.</p>"],
       ["sun", "In the classroom", "<p>Each simulation opens with one question to investigate. Let students predict, then test, then explain.</p><p>Everything runs in a browser on a phone, tablet, laptop or smart board, and needs an internet connection.</p>"],
     ];
     $("findingCards").innerHTML = cards.map((c) => '<article class="finding" style="--c:var(--' + c[0] + ')"><h3>' + c[1] + "</h3>" + c[2] + "</article>").join("");

@@ -24,6 +24,7 @@
     <div class="box">
       <h2>Your pieces</h2>
       <div class="pieces" id="pieces"></div>
+      <div id="choices"></div>
     </div>
     <div class="box">
       <h2>Target</h2>
@@ -37,7 +38,7 @@
         <div class="read"><span>Try to match</span><b id="tryShow"></b></div>
         <button id="resetBtn" class="btn" type="button">Reset bar</button>
       </div>
-      <p class="note" id="msg">Drag pieces onto the bar. Move a piece along the bar and drop it — it snaps to the grid.</p>
+      <p class="note" id="msg">Choose a piece to add it at the end, or drag it onto the bar.</p>
     </div>
     <div class="box">
       <h2>Try it!</h2>
@@ -56,6 +57,7 @@
 <script src="../js/attempts.js"></script>
 <script>Quiz.mount(document.getElementById("quiz")); Attempts.mount(document.getElementById("attempts"), "fractions");</script>
 <script src="lab.js"></script>
+<script src="choices.js"></script>
 <script>
 (function () {
   const cv = document.getElementById("cv"), $ = (i) => document.getElementById(i);
@@ -67,18 +69,18 @@
     { name: "⅛ (2)", color: "#4d6ef6", value: 2 },
     { name: "1/16 (1)", color: "#3bd05e", value: 1 },
   ];
-  let target = { n: 8, d: SEG };
+  let target = { n: 1, d: 2 };
   const TARGETS = [
     [1, 2], [3, 4], [5, 8], [3, 8], [1, 8], [1, 4], [2, 4], [1, 16], [2, 8],
   ];
   const tgtEl = $("targets");
-  tgtEl.innerHTML = TARGETS.map(([n, d]) => '<button type="button" class="pill" data-v="' + n + "/" + d + '">' + n + "/" + d + "</button>").join("");
+  tgtEl.innerHTML = TARGETS.map(([n, d],i) => '<button type="button" class="pill" aria-pressed="' + (i === 0) + '" data-v="' + n + "/" + d + '">' + n + "/" + d + "</button>").join("");
   tgtEl.addEventListener("click", (e) => {
     const b = e.target.closest("button");
     if (!b) return;
     const [n, d] = b.dataset.v.split("/").map(Number);
     tgtEl.querySelectorAll("button").forEach((x) => (x.setAttribute("aria-pressed", x === b)));
-    setTarget(n, d);
+    target = {n,d}; redraw(); announce('Target is ' + n + '/' + d + '.');
   });
   const toolbox = document.getElementById("pieces");
   PIECES.forEach((p) => {
@@ -90,36 +92,21 @@
     toolbox.appendChild(el);
     el.addEventListener("pointerdown", (e) => {
       e.preventDefault();
-      const r = el.getBoundingClientRect();
-      state.drag = { id: null, x: 0, v: p.value, w: 0 };
-      document.body.addEventListener("pointermove", onMove);
-      document.body.addEventListener("pointerup", onUp, { once: true });
+      state.drag = {p,id:e.pointerId};
+      el.setPointerCapture(e.pointerId);
     });
-    // Keyboard: Enter/Space on a toolbox piece places it on the bar at the centre.
-    el.tabIndex = 0;
-    el.addEventListener("keydown", (e) => {
-      if (e.key !== "Enter" && e.key !== " ") return;
-      e.preventDefault();
+    el.addEventListener("pointerup", e => {
+      if (state.drag?.id !== e.pointerId) return;
+      const r = cv.getBoundingClientRect(), x = e.clientX-r.left, y = e.clientY-r.top;
+      if (x >= 0 && x < r.width && y >= 0 && y < r.height) announce(place(p,Math.floor(x/r.width*SEG)));
       state.drag = null;
-      const { width } = cv.getBoundingClientRect();
-      const unit = width / SEG;
-      state.pieces.push({ pos: Math.max(0, Math.min(width - unit, Math.floor((width / 2) / unit) * unit)), v: p.value });
-      redraw();
     });
+    el.addEventListener("pointercancel", () => { state.drag = null; });
   });
-  function onMove(e) { state.drag.x = e.clientX; }
-  function onUp(e) {
-    document.body.removeEventListener("pointermove", onMove);
-    const r = cv.getBoundingClientRect();
-    const x = e.clientX - r.left, y = e.clientY - r.top;
-    const { w: cw, h } = Lab.fit(cv);
-    const unit = cw / SEG;
-    if (y > 6 && y < h - 6 && x > 0 && x < cw) {
-      const pos = Math.max(0, Math.min(cw - unit, Math.floor(x / unit) * unit));
-      state.pieces.push({ pos, v: state.drag.v });
-      redraw();
-    }
-    state.drag = null;
+  function place(p,start) {
+    if (start+p.value > SEG) return 'That piece would extend past the bar.';
+    if (state.pieces.some(q => start < q.start+q.value && q.start < start+p.value)) return 'That piece overlaps another piece.';
+    state.pieces.push({...p,start}); redraw(); return $("msg").textContent;
   }
   function redraw() {
     const { ctx, w, h } = Lab.fit(cv);
@@ -130,21 +117,25 @@
     ctx.fillStyle = "#cbe7fb"; ctx.fillRect(0, 6, Math.round(target.n / target.d * w), h - 12);
     // pieces
     state.pieces.forEach((p) => {
-      ctx.fillStyle = "#e3e3e3"; ctx.fillRect(p.pos, 6, Math.max(1, Math.round(p.v / SEG * w)), h - 12);
+      ctx.fillStyle = p.color; ctx.fillRect(p.start*w/SEG+1, 6, p.value*w/SEG-2, h-12);
     });
     // summary
-    const filled = state.pieces.reduce((s, p) => s + p.v, 0);
+    const filled = state.pieces.reduce((s, p) => s + p.value, 0);
     const tgt = Math.round(target.n / target.d * SEG);
     $("tgtShow").textContent = target.n + "/" + target.d;
     $("fillShow").textContent = filled + " of " + SEG;
     $("nPieces").textContent = state.pieces.length;
-    const ok = filled >= tgt;
-    $("msg").textContent = ok ? "🎉 You filled the bar! (pieces: " + state.pieces.length + ")" : (filled > 0 ? "Getting there — filled: " + Math.round(filled / SEG * 100) + "% of the bar." : "Drag a piece onto the bar.");
+    $("tryShow").textContent = tgt + " of " + SEG;
+    const ok = filled === tgt && state.pieces.every(p => p.start+p.value <= tgt);
+    $("msg").textContent = ok ? "You matched the target exactly!" : state.pieces.some(p => p.start+p.value > tgt) ? "A piece extends beyond the target. Try Undo last." : filled ? "Filled " + filled + " of " + tgt + " target segments." : "Add a piece or drag it onto the bar.";
     $("msg").style.fontWeight = ok ? "900" : "700";
   }
-  window.setTarget = (n, d) => { target = { n, d }; redraw(); };
-  $("resetBtn").onclick = () => { state.pieces = []; redraw(); };
-  Lab.fit(cv); setTimeout(() => { redraw(); }, 40);
+  const reset = () => { state.pieces = []; redraw(); };
+  const announce = LabChoices($("choices"), {sourceLabel:"Fraction piece", sources:PIECES.map((p,i) => [String(i),p.name]), action:"Add piece",
+    place:i => place(PIECES[+i],Math.max(0,...state.pieces.map(p => p.start+p.value))), reset,
+    undo:() => { const p = state.pieces.pop(); redraw(); return p ? 'Removed the last piece. ' + $("msg").textContent : 'Nothing to undo.'; }});
+  $("resetBtn").onclick = () => { reset(); announce('Bar cleared.'); };
+  redraw(); new ResizeObserver(redraw).observe(cv);
 })();
 </script>
 </body>

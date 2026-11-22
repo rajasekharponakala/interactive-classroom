@@ -30,6 +30,7 @@
     <div class="box">
       <h2>Drag the stages</h2>
       <div class="box-gap" id="toolbox"></div>
+      <div id="choices"></div>
       <div class="reads">
         <div class="read"><span>Stages on the ring</span><b id="filled">0</b></div>
         <div class="read"><span>Correct order?</span><b id="ok">Drag the stages.</b></div>
@@ -40,7 +41,7 @@
       <h2>Try it!</h2>
       <ul class="note" style="list-style:none;margin:6px 0 0;padding:0">
         <li>✔ Watch a chicken egg on a nest turn into a chick — and then into a laying chicken.</li>
-        <li>✔ The butterfly goes egg → caterpillar → cocoon → adult. Which parts happen in spring and summer?</li>
+        <li>✔ Where does the chrysalis fit in the butterfly life cycle?</li>
         <li>✔ A seed sprouts (new plant) — do roots go first or leaves?</li>
       </ul>
     </div>
@@ -52,39 +53,35 @@
 <script src="../js/attempts.js"></script>
 <script>Quiz.mount(document.getElementById("quiz")); Attempts.mount(document.getElementById("attempts"), "life-cycles");</script>
 <script src="lab.js"></script>
+<script src="choices.js"></script>
 <script>
 (function () {
   const cv = document.getElementById("cv"), $ = (i) => document.getElementById(i);
   const CYCLES = {
     chicken: [["Egg", "🥚"], ["Chick", "🐣"], ["Adult", "🐔"]],
-    butterfly: [["Egg", "🥚"], ["Caterpillar", "🐛"], ["Cocoon", "🌿"], ["Adult", "🦋"]],
+    butterfly: [["Egg", "🥚"], ["Caterpillar", "🐛"], ["Chrysalis", "🌿"], ["Adult", "🦋"]],
     frog: [["Egg", "🥚"], ["Tadpole", "🐸"], ["Adult", "🐸"]],
     plant: [["Seed", "🌱"], ["Sprout", "🌿"], ["Leaf", "🌿"], ["Flower", "🌸"], ["Fruit", "🍎"]],
   };
   let cyc = "chicken", drag = null;
   let placed = []; // { idx, name }
   const targetOrder = () => CYCLES[cyc].map((s) => s[0]);
-  function setCycle(name) { cyc = name; placed = []; toolbox(); redraw(); }
+  let announce;
+  function setCycle(name) {
+    cyc = name; placed = []; toolbox();
+    announce = LabChoices($("choices"), {sourceLabel:"Life stage", sources:[...CYCLES[cyc]].sort((a,b) => a[0].localeCompare(b[0])).map(([n]) => [n,n]),
+      targetLabel:"Slot", targets:CYCLES[cyc].map((_,i) => [String(i),"Slot " + (i+1)]), place:(stage,i) => place(stage,+i),
+      reset:() => { placed = []; toolbox(); }, undo:() => {const p = placed.pop(); toolbox(); return p ? "Removed " + p.name + "." : "Nothing to undo."; }});
+  }
   function toolbox() {
     const done = new Set(placed.map((p) => p.name));
-    const remaining = CYCLES[cyc].filter((s) => !done.includes(s[0]));
+    const remaining = CYCLES[cyc].filter((s) => !done.has(s[0])).sort((a,b) => a[0].localeCompare(b[0]));
     $("toolbox").innerHTML = remaining.map((s) => '<div class="piece-thumb" data-s="' + s[0] + '" draggable="true">' + s[1] + " " + s[0] + "</div>").join("");
     $("toolbox").querySelectorAll(".piece-thumb").forEach((el) => {
       el.addEventListener("pointerdown", (e) => {
         e.preventDefault();
         drag = { name: el.dataset.s, x: 0, y: 0 };
         cv.setPointerCapture(e.pointerId);
-      });
-      // Keyboard: fill the next open slot in order.
-      el.tabIndex = 0;
-      el.addEventListener("keydown", (e) => {
-        if (e.key !== "Enter" && e.key !== " ") return;
-        e.preventDefault();
-        if (placed.some((p) => p.name === el.dataset.s)) return;
-        let idx = 0;
-        while (placed.some((p) => p.idx === idx)) idx++;
-        placed.push({ idx, name: el.dataset.s });
-        toolbox(); redraw();
       });
     });
     redraw();
@@ -104,9 +101,9 @@
       ctx.fillStyle = p ? Lab.css("--sun") : Lab.css("--line"); ctx.fill();
       ctx.strokeStyle = Lab.css("--ink"); ctx.stroke();
       ctx.font = "800 13px " + Lab.css("--body"); ctx.fillStyle = Lab.css("--ink-2"); ctx.textAlign = "center";
-      ctx.fillText(s[1], px, py - 8);
-      ctx.font = "900 12px"; ctx.fillText(String(i + 1), px, py + 7);
-      if (p) { ctx.fillStyle = Lab.css("--ink"); ctx.font = "800 13px " + Lab.css("--body"); ctx.fillText(p.name, px, py + 25); }
+      ctx.fillStyle = p ? "#221c3e" : Lab.css("--ink");
+      ctx.fillText(String(i + 1), px, py + 5);
+      if (p) { ctx.fillStyle = Lab.css("--ink"); ctx.fillText(p.name, px, py + 29); }
     });
     if (drag && Math.hypot(drag.x, drag.y) > 30) {
       const a = Math.atan2(drag.y, drag.x) + Math.PI / 2;
@@ -115,37 +112,37 @@
       ctx.fillText(drag.name, px, py);
     }
     $("filled").textContent = placed.length;
-    const names = placed.map((p) => p.name);
-    const ok = placed.length === slots && targetOrder().every((t, i) => names[i] === t);
-    const all = placed.length === slots;
-    $("ok").textContent = ok ? "✅ All stages in the right order!" : (all ? "🔁 Close! Re-check the order" : (names.length ? "Drag the remaining stages onto the ring." : "Drag a stage onto the ring."));
-    $("ok").style.color = ok ? "#3fbf6b" : "#ff6f61";
+    $("ok").textContent = placed.length === slots ? "All stages correct!" : "Match stages to slots.";
   }
   cv.addEventListener("pointermove", (e) => {
     if (!drag) return;
     const r = cv.getBoundingClientRect();
-    drag.x = e.clientX - r.left - cv.width / 2, drag.y = e.clientY - r.top - cv.height / 2;
+    drag.x = e.clientX-r.left-r.width/2; drag.y = e.clientY-r.top-r.height/2;
     redraw();
   });
   cv.addEventListener("pointerup", (e) => {
     if (!drag) return;
     cv.releasePointerCapture(e.pointerId);
-    const { w, h } = Lab.fit(cv);
-    const CX = w / 2, CY = h / 2, R = Math.min(w, h) * 0.34;
-    const dx = drag.x, dy = drag.y;
-    if (Math.hypot(dx, dy) > 30) {
+    const r = cv.getBoundingClientRect(), dx = e.clientX-r.left-r.width/2, dy = e.clientY-r.top-r.height/2;
+    if (Math.abs(Math.hypot(dx,dy)-Math.min(r.width,r.height)*.34) < 28) {
       const slots = CYCLES[cyc].length;
       const a = Math.atan2(dy, dx) + Math.PI / 2;
-      let idx = Math.round((a / (2 * Math.PI) * slots + slots) % slots);
-      if (!placed.find((p) => p.idx === idx)) placed.push({ idx, name: drag.name });
-      placed.sort((a, b) => a.idx - b.idx);
+      const idx = (Math.round(a / (2 * Math.PI) * slots) + slots) % slots;
+      announce(place(drag.name,idx));
     }
     drag = null;
     toolbox(); redraw();
   });
+  $("cycleSel").innerHTML = Object.keys(CYCLES).map(name => `<button type="button" class="pill" data-v="${name}" aria-pressed="${name===cyc}">${name[0].toUpperCase()+name.slice(1)}</button>`).join('');
   Lab.pills("cycleSel", (v) => setCycle(v));
-  Lab.fit(cv);
-  setTimeout(() => { toolbox(); redraw(); }, 30);
+  cv.addEventListener("pointercancel", () => { drag = null; redraw(); });
+  function place(name,idx) {
+    if (placed.some(p => p.idx === idx || p.name === name)) return "That slot or stage is already used.";
+    if (targetOrder()[idx] !== name) return "Not quite. Try another slot for " + name.toLowerCase() + ".";
+    placed.push({idx,name}); toolbox();
+    return placed.length === CYCLES[cyc].length ? "All stages in the right order!" : name + " placed in slot " + (idx+1) + ".";
+  }
+  setCycle(cyc); new ResizeObserver(redraw).observe(cv);
 })();
 </script>
 </body>

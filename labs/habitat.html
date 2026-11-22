@@ -25,8 +25,9 @@
     <div class="box">
       <h2>Drag animals here</h2>
       <div class="box-gap" id="toolbox"></div>
+      <div id="choices"></div>
       <div class="reads">
-        <div class="read"><span>Animals placed</span><b id="score">0 of 10</b></div>
+        <div class="read"><span>Animals placed</span><b id="score">0 of 4</b></div>
         <div class="read"><span>Left for home</span><b id="wrong">–</b></div>
       </div>
     </div>
@@ -34,9 +35,8 @@
     <div class="box">
       <h2>Try it!</h2>
       <ul class="note" style="list-style:none;margin:6px 0 0;padding:0">
-        <li>✔ A rabbit hops and chews grass. Where does it belong?</li>
-        <li>✔ A snake is cold — where would it hide?</li>
-        <li>✔ A whale is huge — does it live in the pond or the ocean?</li>
+        <li>These are example habitats, not the only places an animal might live. Choose an animal and a habitat, or drag a card onto the picture.</li>
+        <li>How do a pond and an ocean differ?</li>
       </ul>
     </div>
   </div>
@@ -47,16 +47,14 @@
 <script src="../js/attempts.js"></script>
 <script>Quiz.mount(document.getElementById("quiz")); Attempts.mount(document.getElementById("attempts"), "habitat");</script>
 <script src="lab.js"></script>
+<script src="choices.js"></script>
 <script>
 (function () {
   const cv = document.getElementById("cv"), $ = (i) => document.getElementById(i);
   // Grid: 0=Forest (top-left), 1=Desert (top-right), 2=Pond (bottom-left), 3=Ocean (bottom-right).
   const ENVS = [["Forest", "#d9f4e2"], ["Desert", "#fff1c7"], ["Pond", "#dbe9ff"], ["Ocean", "#1f3866"]];
-  const ANIMALS = [
-    ["Rabbit", "🐇", "forest"], ["Deer", "🦌", "forest"], ["Snake", "🐍", "desert"],
-    ["Lizard", "🦎", "desert"], ["Crocodile", "🐊", "pond"], ["Whale", "🐋", "ocean"],
-    ["Crab", "🦀", "ocean"], ["Bamboo", "🎋", "forest"], ["Owl", "🦉", "forest"], ["Vulture", "🕊", "desert"],
-  ];
+  const ANIMALS = [["Sambar deer", "🦌", "forest"], ["Desert fox", "🦊", "desert"],
+    ["Pond snail", "🐌", "pond"], ["Blue whale", "🐋", "ocean"]];
   let drag = null, placed = [];
   const envIdxAt = (x, y, w, h) => Math.min(3, Math.floor(y / (h / 2)) * 2 + Math.min(1, Math.floor(x / (w / 2))));
   function toolbox() {
@@ -66,19 +64,6 @@
         e.preventDefault();
         drag = { name: el.dataset.s, x: 0, y: 0 };
         cv.setPointerCapture(e.pointerId);
-      });
-      // Keyboard: Enter/Space places the animal in its home.
-      el.tabIndex = 0;
-      el.addEventListener("keydown", (e) => {
-        if (e.key !== "Enter" && e.key !== " ") return;
-        e.preventDefault();
-        const a = ANIMALS.find((a) => a[0] === el.dataset.s);
-        if (!a) return;
-        if (placed.find((p) => p.name === a[0])) { redraw(); return; }
-        const home = ENVS.findIndex(([n]) => n.toLowerCase() === a[2]);
-        if (home < 0) return;
-        placed.push({ name: a[0], env: ENVS[home][0], emoji: a[1] });
-        redraw();
       });
     });
     redraw();
@@ -93,7 +78,8 @@
       ctx.fillStyle = ENVS[i][1]; ctx.fill();
       ctx.strokeStyle = Lab.css("--ink"); ctx.lineWidth = 2; ctx.stroke();
       ctx.font = "800 15px " + Lab.css("--body"); ctx.fillStyle = Lab.css("--ink-2"); ctx.textAlign = "center";
-      ctx.fillText(name, cx + w / 4, cy + h / 4);
+      ctx.fillStyle = name === "Ocean" ? "#fff" : "#221c3e";
+      ctx.fillText(name, cx + w / 4, cy + h / 4 - 23);
     });
     // placed animals
     placed.forEach((p) => {
@@ -120,15 +106,23 @@
     if (!drag) return;
     cv.releasePointerCapture(e.pointerId);
     const { w, h } = Lab.fit(cv);
-    const idx = envIdxAt(drag.x, drag.y, w, h);
-    const a = ANIMALS.find((a) => a[0] === drag.name);
-    if (a && a[2] === ENVS[idx][0].toLowerCase() && !placed.find((p) => p.name === drag.name))
-      placed.push({ name: drag.name, env: ENVS[idx][0], emoji: a[1] });
+    const r = cv.getBoundingClientRect(), x = e.clientX-r.left, y = e.clientY-r.top;
+    if (x >= 0 && y >= 0 && x < w && y < h) announce(place(drag.name, ENVS[envIdxAt(x,y,w,h)][0]));
     drag = null;
     redraw();
   });
-  Lab.fit(cv);
-  setTimeout(() => { toolbox(); redraw(); }, 30);
+  cv.addEventListener("pointercancel", () => { drag = null; redraw(); });
+  function place(name, env) {
+    const a = ANIMALS.find(a => a[0] === name);
+    if (placed.some(p => p.name === name)) return name + " is already placed.";
+    if (env.toLowerCase() !== a[2]) return "Not quite. Try another habitat for " + name + ".";
+    placed.push({name, env, emoji:a[1]}); redraw();
+    return placed.length === ANIMALS.length ? "All four animals matched!" : name + " matched to " + env + ".";
+  }
+  const announce = LabChoices($("choices"), {sourceLabel:"Animal", sources:ANIMALS.map(([name]) => [name,name]),
+    targetLabel:"Habitat", targets:ENVS.map(([name]) => [name,name]), place,
+    reset:() => { placed = []; redraw(); }, undo:() => { const p = placed.pop(); redraw(); return p ? "Removed " + p.name + "." : "Nothing to undo."; }});
+  toolbox(); new ResizeObserver(redraw).observe(cv);
 })();
 </script>
 </body>

@@ -75,5 +75,8 @@ table.log td { text-align: right; padding: 4px; border-top: 1px solid var(--line
 .quiz-note { font-size: 14px; color: var(--ink-2); margin: 8px 0 0; }
 .quiz-again { margin-top: 14px; }
 
-/* ---- timer & history (mounted by js/attempts.js on lab pages) ---- */
+/* Native alternatives to drag-and-drop. */
+.lab-choices { display: grid; gap: 8px; margin: 8px 0; }
+.lab-choices label { display: grid; gap: 2px; font-weight: 700; }
+.lab-choices select { width: 100%; min-width: 0; min-height: 44px; padding: 4px 8px; }
 .tHist { margin: 10px 0 0; font-size: 12px; color: var(--ink-2); font-weight: 700; }

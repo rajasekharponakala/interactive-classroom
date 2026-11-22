@@ -53,6 +53,7 @@ h1 .hl { color: var(--ink); background: linear-gradient(90deg, var(--mango) 0%, 
 .head p { margin-top: 6px; color: var(--ink-2); font-size: 17px; max-width: 66ch; }
 
 /* ---- own labs ---- */
+.lab-filters { margin-bottom: 16px; }
 .lab-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
 .lab-card { --c: var(--sky); --cs: var(--sky-soft); display: flex; flex-direction: column; text-align: left; padding: 0; border: 3px solid var(--ink); border-radius: var(--r-lg); background: var(--card); overflow: hidden; cursor: pointer; box-shadow: 8px 8px 0 var(--c); transition: transform .25s cubic-bezier(.3, 1.6, .5, 1.6), box-shadow .25s; }
 .lab-card:hover { transform: translate(-3px, -6px) rotate(-1.5deg); box-shadow: 12px 14px 0 var(--c); }
@@ -135,6 +136,8 @@ mark { background: var(--mango); color: #2b1e4d; border-radius: 4px; padding: 0 
 .gap-exp span:first-child { width: 28px; height: 28px; }
 .gap-exp strong { font-size: 14px; line-height: 1.35; font-weight: 800; }
 .gap-exp em { display: block; font-size: 13px; color: var(--ink-2); line-height: 1.45; }
+.chapter-activity { margin-top: 12px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 10px; }
+.chapter-activity summary { cursor: pointer; font-weight: 800; padding: 8px 0; }
 .gap-exp.ok { opacity: .5; }
 
 /* ---- heatmaps ---- */

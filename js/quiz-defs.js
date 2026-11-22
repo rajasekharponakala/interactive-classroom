@@ -2,6 +2,14 @@
 // Used by js/quiz.js on the lab pages and for the progress badges on the home page.
 // Questions are short and grounded in what the labs actually show.
 window.LAB_QUIZZIES = {
+  constructions: [
+    { q: 'AB is 6 cm. What compass opening gives two crossings when you draw equal circles at A and B?', choices: ['2 cm', '3 cm', '4 cm'], answer: 2, why: 'The radius must be greater than half of AB. At exactly 3 cm the circles only touch.' },
+    { q: 'Can straight segments of lengths 2, 3 and 6 cm form a triangle?', choices: ['Yes', 'No'], answer: 1, why: 'The shorter sides add to 5 cm, which is less than 6 cm. The compass circles do not meet.' },
+  ],
+  circles: [
+    { q: 'A minor arc makes a 100° angle at the centre. What angle does it make at a point on the opposite arc?', choices: ['50°', '100°', '200°'], answer: 0, why: 'The angle at the centre is twice the angle at the circumference on the same arc.' },
+    { q: 'Two tangents from P touch the circle at A and B. If PA is 4 units, what is PB?', choices: ['2 units', '4 units', '8 units'], answer: 1, why: 'Tangent segments from the same outside point have equal lengths.' },
+  ],
   "lens-mirror": [
     { q: "For a convex lens with focal length 12 cm, what is the image when the object is 30 cm away?",
       choices: ["Real, upside down, and smaller", "Virtual, upright, and bigger", "Always upright"], answer: 0,
@@ -76,20 +84,20 @@ window.LAB_QUIZZIES = {
   "life-cycles": [
     { q: "In the chicken cycle, what comes first — the egg or the chick?",
       choices: ["The egg", "The chick"], answer: 0, why: "The first ring is the egg — the chick is next." },
-    { q: "Butterfly: Egg → Caterpillar → Cocoon → Adult. What sits between the caterpillar and the adult?",
-      choices: ["The cocoon", "A second egg", "A seed"], answer: 0 },
+    { q: "What stage comes between caterpillar and adult butterfly?",
+      choices: ["Chrysalis (pupa)", "A second egg", "A seed"], answer: 0 },
     { q: "Plant cycle: Seed → Sprout → Leaves → Flower → Fruit. Do the roots go first?",
       choices: ["Yes, the roots go first", "The flower comes first"], answer: 0,
       why: "The lab's order starts with the sprout — the roots come up from the seed." },
   ],
   "habitat": [
-    { q: "Which habitat does the lab assign to its desert snake?", choices: ["Forest", "Desert", "Pond"], answer: 1, why: "This is a desert example. Other snake species live in forests, wetlands or other habitats." },
+    { q: "Which example habitat fits the desert fox?", choices: ["Forest", "Desert", "Pond"], answer: 1 },
     { q: "Where does a whale belong?", choices: ["Pond", "Ocean", "Forest"], answer: 1 },
-    { q: "Which habitat does this lab assign to its rabbit?", choices: ["Desert", "Pond", "Forest"], answer: 2, why: "The forest is one example. Different rabbit species also live in other habitats." },
+    { q: "Which example habitat fits the sambar deer?", choices: ["Ocean", "Pond", "Forest"], answer: 2 },
   ],
   "animal-food": [
-    { q: "Who eats plants?", choices: ["Rabbit", "Snake", "Owl"], answer: 0 },
-    { q: "Which animal is matched to bugs in this lab?", choices: ["Vulture", "Owl", "Fish"], answer: 1, why: "The lab matches bugs to the owl. In nature, owl diets differ by species." },
-    { q: "Who eats seeds?", choices: ["Beetle", "Fish", "Caterpillar"], answer: 0, why: "The beetle's food is seeds in the animal list." },
+    { q: "Which animal is matched to grass?", choices: ["Cow", "Barn owl", "Garden spider"], answer: 0 },
+    { q: "Which animal is matched to a mouse?", choices: ["Cow", "Barn owl", "Sparrow"], answer: 1 },
+    { q: "Which animal is matched to seeds?", choices: ["Sparrow", "Barn owl", "Garden spider"], answer: 0 },
   ],
 };
